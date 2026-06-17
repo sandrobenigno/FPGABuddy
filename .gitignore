@@ -1,0 +1,35 @@
+# ============================================
+# ARQUIVOS .VSCODE COM CAMINHOS ABSOLUTOS
+# ============================================
+.vscode/settings.json
+.vscode/cmake-kits.json
+.vscode/launch.json
+.vscode/c_cpp_properties.json
+
+# ============================================
+# ARQUIVOS .VSCODE SEGUROS (MANTÉM)
+# ============================================
+!.vscode/extensions.json
+!.vscode/tasks.json
+
+# ============================================
+# PASTAS DE BUILD
+# ============================================
+build/
+output/
+cmake-build-*/
+
+# ============================================
+# REFERÊNCIAS LOCAIS
+# ============================================
+MyRefs/
+resources/TEMP/
+
+# ============================================
+# ARQUIVOS TEMPORÁRIOS
+# ============================================
+*.log
+*.tmp
+*.swp
+.DS_Store
+Thumbs.db

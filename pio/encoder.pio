@@ -1,0 +1,47 @@
+.program encoder
+; Le os pinos A e B (2 bits consecutivos) e envia o estado de quadratura se houver mudanca.
+; O codigo C lê do FIFO de RX e decodifica as transicoes usando uma tabela lookup.
+
+.wrap_target
+start:
+    in pins, 2          ; Le os pinos A e B (2 bits) para o ISR
+    mov x, isr          ; Move o valor atual para X
+    jmp x!=y push_val   ; Se o valor atual (X) for diferente do anterior (Y), envia
+    mov isr, null       ; Caso contrario, limpa o ISR para a proxima leitura
+    jmp start           ; Reinicia a leitura
+push_val:
+    mov y, x            ; Atualiza Y (estado anterior) com o estado atual (X)
+    push block          ; Envia o estado de 2 bits para o FIFO RX
+.wrap
+
+% c-sdk {
+#include "hardware/gpio.h"
+
+static inline void encoder_program_init(PIO pio, uint sm, uint offset, uint pin_a) {
+    pio_sm_config c = encoder_program_get_default_config(offset);
+
+    // Configura os pinos de entrada consecutivos (pin_a e pin_a + 1)
+    sm_config_set_in_pins(&c, pin_a);
+
+    // Define direcoes como entrada
+    pio_sm_set_consecutive_pindirs(pio, sm, pin_a, 2, false);
+
+    // Inicializa os pinos no PIO
+    pio_gpio_init(pio, pin_a);
+    pio_gpio_init(pio, pin_a + 1);
+
+    // Habilita os pull-ups internos para tratar chaves mecanicas do encoder
+    gpio_pull_up(pin_a);
+    gpio_pull_up(pin_a + 1);
+
+    // In Shift Register: shift para a esquerda (MSB first), sem auto-push
+    sm_config_set_in_shift(&c, false, false, 32);
+
+    // Configura o clock divisor para filtrar ruidos mecanicos (debounce de hardware)
+    // 125,000,000 / 12500 = 10 kHz de taxa de amostragem (debounce perfeito)
+    sm_config_set_clkdiv(&c, 12500.0f);
+
+    // Inicializa a maquina de estados
+    pio_sm_init(pio, sm, offset, &c);
+}
+%}
