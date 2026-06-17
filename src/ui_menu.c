@@ -20,6 +20,7 @@ static const char *VIDEO_LABELS[] = {"AUTO", "PAL", "NTSC"};
 
 static MenuOption menu_options[MENU_MAX_ITEMS] = {
     {"Voltar ao Jogo", '\0', 0, 0, NULL},
+    {"Reiniciar", '\0', 0, 0, NULL},
     {"Scanlines", 'S', 2, 3, SCANLINES_LABELS},
     {"Volume", 'A', 2, 3, VOLUME_LABELS},
     {"Dificuldade P1", 'X', 0, 1, DIFFICULTY_LABELS},
@@ -91,8 +92,8 @@ void ui_draw_quick_settings_line(int row, int item_idx, bool is_focused, bool is
     char line_buf[32];
     MenuOption opt = menu_options[item_idx];
     
-    if (item_idx == 0) {
-        snprintf(line_buf, sizeof(line_buf), "%s Voltar ao Jogo", is_focused ? ">" : " ");
+    if (item_idx == 0 || item_idx == 1) {
+        snprintf(line_buf, sizeof(line_buf), "%s %s", is_focused ? ">" : " ", opt.label);
     } else {
         const char *val_str = opt.value_labels[opt.value];
         if (is_focused && is_editing) {

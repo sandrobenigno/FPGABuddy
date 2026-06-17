@@ -21,6 +21,9 @@ bool fpga_inject_rom(GameInfo* game);
 // Resets FPGA and ejects virtual cart
 void fpga_reset_and_eject(void);
 
+// Performs a quick reset of the FPGA core
+void fpga_reset_core(void);
+
 // Sets RGB LED color on FPGA (Target 0x00, CMD 0x02)
 void fpga_set_rgb(uint8_t r, uint8_t g, uint8_t b);
 

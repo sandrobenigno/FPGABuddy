@@ -415,14 +415,14 @@ int main() {
                         current_state = STATE_CONFIGURANDO;
                         fpga_set_rgb(127, 0, 0); // Vermelho ao entrar no estado de Configuração
                         edit_mode = false;
-                        menu_focus = 0;
+                        menu_focus = 1; // Inicia selecionado em "Reiniciar"
                         menu_scroll = 0;
                         
                         ui_draw_message("* CONFIG. RAPIDAS *", NULL, NULL, NULL);
                         for (int i = 0; i < 3; i++) {
                             ui_draw_quick_settings_line(i + 1, menu_scroll + i, (menu_focus == menu_scroll + i), false, true);
                         }
-                        printf("[SISTEMA] Entrando no Menu de Configuracoes Rapidas\n");
+                        printf("[SISTEMA] Entrando no Menu de Configuracoes Rapidas (Foco em Reiniciar)\n");
                     }
                 } else if (current_state == STATE_CONFIGURANDO) {
                     int32_t rot = encoder_get_rotation();
@@ -458,6 +458,13 @@ int main() {
                                 fpga_set_rgb(0, 0, 127); // Azul ao voltar para o jogo
                                 ui_draw_message("CONSOLE ATIVO       ", "====================", active_game_name, "Segure 1s p/ voltar ");
                                 printf("[SISTEMA] Voltando para a gameplay\n");
+                            } else if (menu_focus == 1) {
+                                // Reiniciar
+                                printf("[SISTEMA] Reiniciando o console...\n");
+                                fpga_reset_core();
+                                current_state = STATE_JOGANDO;
+                                fpga_set_rgb(0, 0, 127); // Azul ao voltar para o jogo
+                                ui_draw_message("CONSOLE ATIVO       ", "====================", active_game_name, "Segure 1s p/ voltar ");
                             } else {
                                 // Entra no modo de edição da opção
                                 edit_mode = true;

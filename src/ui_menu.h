@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define MENU_MAX_ITEMS 10
+#define MENU_MAX_ITEMS 11
 
 typedef struct {
     const char *label;

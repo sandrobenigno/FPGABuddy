@@ -54,16 +54,18 @@ uint8_t cmd[4] = {
 };
 ```
 
-#### IDs de Parâmetros Mapeados (`menu_options`):
-1. **Scanlines (`'S'`)**: `0` (Desligado), `1` (25%), `2` (50%), `3` (75%)
-2. **Volume (`'A'`)**: `0` (Mudo), `1` (33%), `2` (66%), `3` (100%)
-3. **Dificuldade P1 (`'X'`)**: `0` (B - Fácil), `1` (A - Difícil)
-4. **Dificuldade P2 (`'Y'`)**: `0` (B - Fácil), `1` (A - Difícil)
-5. **Aspecto da Tela (`'W'`)**: `0` (Normal 4:3), `1` (Wide 16:9) (Mapeado como "Ajuste Tela" no LCD)
-6. **Swap Joysticks (`'&'`)**: `0` (Normal), `1` (Trocar portas P1/P2)
-7. **Padrão Vídeo (`'E'`)**: `0` (AUTO - reiniciado a cada novo jogo), `1` (PAL), `2` (NTSC)
-8. **Filtro De-comb (`'C'`)**: `0` (Não), `1` (Sim)
-9. **VBlank (`'M'`)**: `0` (Não), `1` (Sim)
+#### Estrutura do Menu de Configurações Rápidas (`menu_options`):
+*   **Voltar ao Jogo** (Index 0): Ação de clique único. Retorna o sistema ao estado de jogo (`STATE_JOGANDO`) sem alterar a FPGA.
+*   **Reiniciar** (Index 1): Ação de clique único. Envia o reset físico para a FPGA (ID `'R'` com `0x03` seguido de `0x00`) e retorna o sistema imediatamente ao jogo.
+*   **Scanlines (`'S'`)** (Index 2): `0` (Desligado), `1` (25%), `2` (50%), `3` (75%)
+*   **Volume (`'A'`)** (Index 3): `0` (Mudo), `1` (33%), `2` (66%), `3` (100%)
+*   **Dificuldade P1 (`'X'`)** (Index 4): `0` (B - Fácil), `1` (A - Difícil)
+*   **Dificuldade P2 (`'Y'`)** (Index 5): `0` (B - Fácil), `1` (A - Difícil)
+*   **Ajuste Tela (`'W'`)** (Index 6): `0` (Normal 4:3), `1` (Wide 16:9) (Mapeado como "Ajuste Tela" no LCD)
+*   **Swap Joysticks (`'&'`)** (Index 7): `0` (Normal), `1` (Trocar portas P1/P2)
+*   **Padrão Vídeo (`'E'`)** (Index 8): `0` (AUTO - reiniciado a cada novo jogo), `1` (PAL), `2` (NTSC)
+*   **De-comb (`'C'`)** (Index 9): `0` (Não), `1` (Sim)
+*   **VBlank (`'M'`)** (Index 10): `0` (Não), `1` (Sim)
 
 > [!NOTE]
 > **Gerenciamento de Modo SPI para Configurações**: Para evitar conflitos de sincronismo com comandos HID (que restauram o barramento em Mode 0 para compatibilidade do SD Card), a escrita de configurações individuais no menu do LCD utiliza a função `fpga_send_config(id, val)`. Ela chaveia o SPI0 temporariamente para o **Modo 1** e restaura para o **Modo 0** imediatamente após a transmissão.

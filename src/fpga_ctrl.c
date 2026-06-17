@@ -105,7 +105,7 @@ void fpga_send_all_configs(void) {
     
     for (int i = 1; i < MENU_MAX_ITEMS; i++) {
         MenuOption* opt = ui_get_menu_option(i);
-        if(!opt) continue;
+        if (!opt || opt->id == '\0') continue;
         fpga_send_config(opt->id, opt->value);
     }
 }
@@ -194,6 +194,14 @@ bool fpga_inject_rom(GameInfo* game) {
     fpga_send_all_configs();
     printf("[FPGA] Injeção concluída e console ativo!\n");
     return true;
+}
+
+void fpga_reset_core(void) {
+    // Ativa o reset (0x03)
+    fpga_send_config('R', 0x03);
+    sleep_ms(100);
+    // Libera o reset para rodar (0x00)
+    fpga_send_config('R', 0x00);
 }
 
 void fpga_reset_and_eject(void) {
