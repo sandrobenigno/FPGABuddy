@@ -1,8 +1,4 @@
-# FPGABuddy - Contexto Técnico do Projeto
-
-Este documento serve como a base de conhecimento centralizada do projeto **FPGABuddy**.
-
----
+# FPGABuddy
 
 ## 1. Visão Geral do Sistema
 O **FPGABuddy** é um firmware para o microcontrolador **Raspberry Pi Pico (RP2040)** que atua como companion (coprocessador) para um core de **Atari 2600** executado em uma FPGA **Tang Nano 20k**. 
@@ -41,7 +37,7 @@ O hardware do companion utiliza as seguintes GPIOs do RP2040:
 
 O barramento SPI0 é operado em **Modo 1 (CPOL=0, CPHA=1)** a 20 MHz ao falar com a FPGA.
 > [!IMPORTANT]
-> **Resolução de Conflito de MISO**: A FPGA mantém a linha MISO em alta impedância (`'Z'`) sempre que o Chip Select da FPGA (`GP28`) estiver inativo (`HIGH`). Isso permite que o SD Card (`GP22`) use o mesmo barramento sem interferência física.
+> **Resolução de Conflito de MISO**: Após uma alteração que fizemos no core A2600Nano, a FPGA mantém a linha MISO em alta impedância (`'Z'`) sempre que o Chip Select da FPGA (`GP28`) estiver inativo (`HIGH`). Isso permite que o SD Card (`GP22`) use o mesmo barramento sem interferência física. 
 
 ### Comandos de Configuração (SYS Target)
 Para alterar configurações na FPGA (como scanlines ou aspecto), o RP2040 envia pacotes síncronos de **4 bytes**:

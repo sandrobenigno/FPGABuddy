@@ -37,3 +37,8 @@ resources/TEMP/
 *.swp
 .DS_Store
 Thumbs.db
+
+# ============================================
+# PASTA DE DIRETRIZES E ANOTAÇÕES TEMPORÁRIAS
+# ============================================
+TMP
