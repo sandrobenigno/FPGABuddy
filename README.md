@@ -2,6 +2,8 @@
 
 🇺🇸 English | 🇧🇷 [Português](README.pt-BR.md)
 
+<img width="681" height="800" src="img/FPGABuddy.jpeg" />
+
 ## 1. System Overview
 **FPGABuddy** is a firmware for the **Raspberry Pi Pico (RP2040)** microcontroller that acts as a companion (coprocessor) for an **Atari 2600** core running on a **Tang Nano 20k** FPGA.
 * The RP2040 manages the SD card (FAT32), processes a local ROM database (`src/db.c`), renders the interface on an I2C 20x4 LCD display (`src/lcd_20x4.c`), and physically injects ROMs directly into the FPGA memory via the SPI0 bus.
