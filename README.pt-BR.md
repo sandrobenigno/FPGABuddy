@@ -26,6 +26,7 @@ O hardware do companion utiliza as seguintes GPIOs do RP2040:
 | **GP14** | Encoder - Canal B | Entrada | Leitura por PIO0 SM1 |
 | **GP15** | Encoder - Clique (SW) | Entrada | Ativo em LOW (Pull-up interno ativo) |
 | **GP16** | SPI0 MISO | Entrada | Compartilhado entre SD Card e FPGA |
+| **GP17** | FPGA Chip Select (CS) | Saída | Ativo em LOW (Controle manual do barramento SPI) |
 | **GP18** | SPI0 SCK | Saída | Compartilhado entre SD Card e FPGA |
 | **GP19** | SPI0 MOSI | Saída | Compartilhado entre SD Card e FPGA |
 | **GP20** | LCD I2C SDA | Bidirecional| Pull-ups internos ativos, barramento `i2c0` (operando a 100 kHz) |
@@ -33,7 +34,6 @@ O hardware do companion utiliza as seguintes GPIOs do RP2040:
 | **GP22** | SD Chip Select (CS) | Saída | Ativo em LOW (Gerenciado pelo FatFS) |
 | **GP3** | Botão Auxiliar | Entrada | Desacoplado do Encoder (Configurado em Pull-down, envia F1 Select) |
 | **GP25** | LED Onboard | Saída | Pisca durante o boot / reflete cliques do encoder |
-| **GP17** | FPGA Chip Select (CS) | Saída | Ativo em LOW (Controle manual do barramento SPI) |
 
 ---
 

@@ -26,6 +26,7 @@ The companion hardware uses the following RP2040 GPIOs:
 | **GP14** | Encoder - Channel B | Input | Read by PIO0 SM1 |
 | **GP15** | Encoder - Click (SW) | Input | Active LOW (internal pull-up enabled) |
 | **GP16** | SPI0 MISO | Input | Shared between SD Card and FPGA |
+| **GP17** | FPGA Chip Select (CS) | Output | Active LOW (manual control of the SPI bus) |
 | **GP18** | SPI0 SCK | Output | Shared between SD Card and FPGA |
 | **GP19** | SPI0 MOSI | Output | Shared between SD Card and FPGA |
 | **GP20** | LCD I2C SDA | Bidirectional | Internal pull-ups enabled, i2c0 bus (operating at 100 kHz) |
@@ -33,7 +34,6 @@ The companion hardware uses the following RP2040 GPIOs:
 | **GP22** | SD Chip Select (CS) | Output | Active LOW (managed by FatFS) |
 | **GP3** | Auxiliary Button | Input | Decoupled from Encoder (configured with pull-down, sends F1 Select) |
 | **GP25** | Onboard LED | Output | Blinks during boot / reflects encoder clicks |
-| **GP17** | FPGA Chip Select (CS) | Output | Active LOW (manual control of the SPI bus) |
 
 ---
 
