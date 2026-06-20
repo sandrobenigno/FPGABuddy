@@ -4,11 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "hardware/pio.h"
-
-// Pinos GPIO do Rotary Encoder
-#define ENC_A_PIN      13
-#define ENC_B_PIN      14
-#define ENC_SW_PIN     15
+#include "config.h"
 
 #define ENC_PIO        pio0
 #define ENC_SM         1

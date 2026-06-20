@@ -5,11 +5,9 @@
 #include "hw_config.h"
 #include "ff.h"
 #include "ui_menu.h"
+#include "config.h"
 #include <stdio.h>
 #include <string.h>
-
-#define CS_FPGA_PIN    17
-#define SD_CS_PIN      22
 
 static uint8_t rom_buffer[64 * 1024];
 
@@ -28,7 +26,7 @@ void fpga_ctrl_init_pins(void) {
 void release_spi_bus(void) {
     spi_deinit(spi0);
     
-    const uint pins[] = {16, 18, 19, 22};
+    const uint pins[] = {SPI_MISO_PIN, SPI_SCK_PIN, SPI_MOSI_PIN, SD_CS_PIN};
     for (size_t i = 0; i < sizeof(pins)/sizeof(pins[0]); i++) {
         gpio_init(pins[i]);
         gpio_set_dir(pins[i], GPIO_IN);
@@ -42,12 +40,12 @@ void release_spi_bus(void) {
 }
 
 void claim_spi_bus(void) {
-    spi_init(spi0, 5000000);
+    spi_init(spi0, SPI_FPGA_BAUDRATE);
     spi_set_format(spi0, 8, SPI_CPOL_0, SPI_CPHA_1, SPI_MSB_FIRST);
     
-    gpio_set_function(16, GPIO_FUNC_SPI);
-    gpio_set_function(18, GPIO_FUNC_SPI);
-    gpio_set_function(19, GPIO_FUNC_SPI);
+    gpio_set_function(SPI_MISO_PIN, GPIO_FUNC_SPI);
+    gpio_set_function(SPI_SCK_PIN, GPIO_FUNC_SPI);
+    gpio_set_function(SPI_MOSI_PIN, GPIO_FUNC_SPI);
     
     gpio_init(CS_FPGA_PIN);
     gpio_set_dir(CS_FPGA_PIN, GPIO_OUT);
@@ -60,21 +58,31 @@ void claim_spi_bus(void) {
     gpio_set_drive_strength(SD_CS_PIN, GPIO_DRIVE_STRENGTH_4MA);
 }
 
+// Private helper to wrap repetitive SPI transfers to the FPGA
+static void fpga_spi_transaction(const uint8_t* tx_data, size_t tx_len, const uint8_t* extra_data, size_t extra_len) {
+    gpio_put(CS_FPGA_PIN, 0);
+    sleep_us(5);
+    if (tx_data && tx_len > 0) {
+        spi_write_blocking(spi0, tx_data, tx_len);
+    }
+    if (extra_data && extra_len > 0) {
+        spi_write_blocking(spi0, extra_data, extra_len);
+    }
+    sleep_us(5);
+    gpio_put(CS_FPGA_PIN, 1);
+    sleep_us(10);
+}
+
 void fpga_send_config(char id, uint8_t value) {
     claim_spi_bus();
     
-    gpio_put(CS_FPGA_PIN, 0);
-    sleep_us(5);
     uint8_t cmd[4] = {
         0x00, // Target 0 (SYS)
         0x04, // CMD 4 (SETVAL)
         id,
         value
     };
-    spi_write_blocking(spi0, cmd, 4);
-    sleep_us(5);
-    gpio_put(CS_FPGA_PIN, 1);
-    sleep_us(10);
+    fpga_spi_transaction(cmd, 4, NULL, 0);
     
     // Restaura o formato SPI para o modo esperado pelo cartão SD (SPI Mode 0)
     spi_set_format(spi0, 8, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
@@ -158,8 +166,6 @@ bool fpga_inject_rom(GameInfo* game) {
     sleep_us(10);
     
     printf("[FPGA] Enviando tamanho da ROM (%d bytes)...\n", (int)file_size);
-    gpio_put(CS_FPGA_PIN, 0);
-    sleep_us(5);
     uint8_t cmd_inserted[7] = {
         0x03, 0x04, 0x00,
         (file_size >> 24) & 0xFF,
@@ -167,20 +173,11 @@ bool fpga_inject_rom(GameInfo* game) {
         (file_size >> 8) & 0xFF,
         file_size & 0xFF
     };
-    spi_write_blocking(spi0, cmd_inserted, 7);
-    sleep_us(5);
-    gpio_put(CS_FPGA_PIN, 1);
-    sleep_us(10);
+    fpga_spi_transaction(cmd_inserted, 7, NULL, 0);
     
     printf("[FPGA] Iniciando injeção da ROM na RAM...\n");
-    gpio_put(CS_FPGA_PIN, 0);
-    sleep_us(5);
     uint8_t stream_header[2] = {0x03, 0x08};
-    spi_write_blocking(spi0, stream_header, 2);
-    spi_write_blocking(spi0, rom_buffer, file_size);
-    sleep_us(5);
-    gpio_put(CS_FPGA_PIN, 1);
-    sleep_us(10);
+    fpga_spi_transaction(stream_header, 2, rom_buffer, file_size);
     
     // Reseta a opção "Padrao Video" (ID 'E') para 0 (AUTO) para o próximo jogo
     for (int i = 1; i < MENU_MAX_ITEMS; i++) {
@@ -208,38 +205,19 @@ void fpga_reset_and_eject(void) {
     claim_spi_bus();
     
     printf("[FPGA] Ejetando cartucho virtual e resetando a FPGA...\n");
-    spi_set_baudrate(spi0, 5000000); // 5 MHz
+    spi_set_baudrate(spi0, SPI_FPGA_BAUDRATE);
     
-    gpio_put(CS_FPGA_PIN, 0);
-    sleep_us(5);
     uint8_t reset_cmd[4] = {0x00, 0x04, 'R', 0x03};
-    spi_write_blocking(spi0, reset_cmd, 4);
-    sleep_us(5);
-    gpio_put(CS_FPGA_PIN, 1);
-    sleep_us(10);
+    fpga_spi_transaction(reset_cmd, 4, NULL, 0);
     
-    gpio_put(CS_FPGA_PIN, 0);
-    sleep_us(5);
     uint8_t cmd_eject[7] = {0x03, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00};
-    spi_write_blocking(spi0, cmd_eject, 7);
-    sleep_us(5);
-    gpio_put(CS_FPGA_PIN, 1);
-    sleep_us(10);
+    fpga_spi_transaction(cmd_eject, 7, NULL, 0);
     
-    gpio_put(CS_FPGA_PIN, 0);
-    sleep_us(5);
     uint8_t cmd_direct_0[7] = {0x03, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00};
-    spi_write_blocking(spi0, cmd_direct_0, 7);
-    sleep_us(5);
-    gpio_put(CS_FPGA_PIN, 1);
-    sleep_us(10);
+    fpga_spi_transaction(cmd_direct_0, 7, NULL, 0);
     
-    gpio_put(CS_FPGA_PIN, 0);
-    sleep_us(5);
     uint8_t run_cmd[4] = {0x00, 0x04, 'R', 0x00};
-    spi_write_blocking(spi0, run_cmd, 4);
-    sleep_us(5);
-    gpio_put(CS_FPGA_PIN, 1);
+    fpga_spi_transaction(run_cmd, 4, NULL, 0);
     
     fpga_send_all_configs();
     printf("[FPGA] Reset e Ejection concluidos.\n");
@@ -249,13 +227,12 @@ void fpga_reset_and_eject(void) {
 void fpga_set_rgb(uint8_t r, uint8_t g, uint8_t b) {
     claim_spi_bus();
     
-    gpio_put(CS_FPGA_PIN, 0);
-    sleep_us(5);
+    if (r > LED_BRIGHTNESS_LIMIT) r = LED_BRIGHTNESS_LIMIT;
+    if (g > LED_BRIGHTNESS_LIMIT) g = LED_BRIGHTNESS_LIMIT;
+    if (b > LED_BRIGHTNESS_LIMIT) b = LED_BRIGHTNESS_LIMIT;
+
     uint8_t cmd[5] = {0x00, 0x02, r, g, b};
-    spi_write_blocking(spi0, cmd, 5);
-    sleep_us(5);
-    gpio_put(CS_FPGA_PIN, 1);
-    sleep_us(10);
+    fpga_spi_transaction(cmd, 5, NULL, 0);
     
     // Restaura o formato SPI para o modo esperado pelo cartão SD (SPI Mode 0)
     spi_set_format(spi0, 8, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
@@ -264,17 +241,12 @@ void fpga_set_rgb(uint8_t r, uint8_t g, uint8_t b) {
 void fpga_send_key(uint8_t keycode, bool pressed) {
     claim_spi_bus();
     
-    gpio_put(CS_FPGA_PIN, 0);
-    sleep_us(5);
     uint8_t cmd[3] = {
         0x01, // Target 1 (HID)
         0x01, // Cmd 1 (SPI_HID_KEYBOARD)
         pressed ? (keycode & 0x7F) : (keycode | 0x80)
     };
-    spi_write_blocking(spi0, cmd, 3);
-    sleep_us(5);
-    gpio_put(CS_FPGA_PIN, 1);
-    sleep_us(10);
+    fpga_spi_transaction(cmd, 3, NULL, 0);
     
     // Restaura o formato SPI para o modo esperado pelo cartão SD (SPI Mode 0)
     spi_set_format(spi0, 8, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
@@ -283,8 +255,6 @@ void fpga_send_key(uint8_t keycode, bool pressed) {
 void fpga_send_mouse(uint8_t buttons, int8_t dx, int8_t dy) {
     claim_spi_bus();
     
-    gpio_put(CS_FPGA_PIN, 0);
-    sleep_us(5);
     uint8_t cmd[5] = {
         0x01, // Target 1 (HID)
         0x02, // Cmd 2 (SPI_HID_MOUSE)
@@ -292,14 +262,8 @@ void fpga_send_mouse(uint8_t buttons, int8_t dx, int8_t dy) {
         (uint8_t)dx,
         (uint8_t)dy
     };
-    spi_write_blocking(spi0, cmd, 5);
-    sleep_us(5);
-    gpio_put(CS_FPGA_PIN, 1);
-    sleep_us(10);
+    fpga_spi_transaction(cmd, 5, NULL, 0);
     
     // Restaura o formato SPI para o modo esperado pelo cartão SD (SPI Mode 0)
     spi_set_format(spi0, 8, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
 }
-
-
-

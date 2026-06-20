@@ -33,7 +33,7 @@ The companion hardware uses the following RP2040 GPIOs:
 | **GP22** | SD Chip Select (CS) | Output | Active LOW (managed by FatFS) |
 | **GP3** | Auxiliary Button | Input | Decoupled from Encoder (configured with pull-down, sends F1 Select) |
 | **GP25** | Onboard LED | Output | Blinks during boot / reflects encoder clicks |
-| **GP28** | FPGA Chip Select (CS) | Output | Active LOW (manual control of the SPI bus) |
+| **GP17** | FPGA Chip Select (CS) | Output | Active LOW (manual control of the SPI bus) |
 
 ---
 
@@ -41,7 +41,7 @@ The companion hardware uses the following RP2040 GPIOs:
 
 The SPI0 bus is operated in **Mode 1 (CPOL=0, CPHA=1)** at 20 MHz when communicating with the FPGA.
 > [!IMPORTANT]
-> **MISO Conflict Resolution**: After a change we made to the A2600Nano core, the FPGA keeps the MISO line in high impedance (`'Z'`) whenever the FPGA Chip Select (`GP28`) is inactive (`HIGH`). This allows the SD Card (`GP22`) to use the same bus without physical interference.
+> **MISO Conflict Resolution**: After a change we made to the A2600Nano core, the FPGA keeps the MISO line in high impedance (`'Z'`) whenever the FPGA Chip Select (`GP17`) is inactive (`HIGH`). This allows the SD Card (`GP22`) to use the same bus without physical interference.
 
 ### Configuration Commands (SYS Target)
 To change settings on the FPGA (such as scanlines or aspect ratio), the RP2040 sends synchronous **4-byte** packets:

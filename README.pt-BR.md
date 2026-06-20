@@ -33,7 +33,7 @@ O hardware do companion utiliza as seguintes GPIOs do RP2040:
 | **GP22** | SD Chip Select (CS) | Saída | Ativo em LOW (Gerenciado pelo FatFS) |
 | **GP3** | Botão Auxiliar | Entrada | Desacoplado do Encoder (Configurado em Pull-down, envia F1 Select) |
 | **GP25** | LED Onboard | Saída | Pisca durante o boot / reflete cliques do encoder |
-| **GP28** | FPGA Chip Select (CS) | Saída | Ativo em LOW (Controle manual do barramento SPI) |
+| **GP17** | FPGA Chip Select (CS) | Saída | Ativo em LOW (Controle manual do barramento SPI) |
 
 ---
 
@@ -41,7 +41,7 @@ O hardware do companion utiliza as seguintes GPIOs do RP2040:
 
 O barramento SPI0 é operado em **Modo 1 (CPOL=0, CPHA=1)** a 20 MHz ao falar com a FPGA.
 > [!IMPORTANT]
-> **Resolução de Conflito de MISO**: Após uma alteração que fizemos no core A2600Nano, a FPGA mantém a linha MISO em alta impedância (`'Z'`) sempre que o Chip Select da FPGA (`GP28`) estiver inativo (`HIGH`). Isso permite que o SD Card (`GP22`) use o mesmo barramento sem interferência física. 
+> **Resolução de Conflito de MISO**: Após uma alteração que fizemos no core A2600Nano, a FPGA mantém a linha MISO em alta impedância (`'Z'`) sempre que o Chip Select da FPGA (`GP17`) estiver inativo (`HIGH`). Isso permite que o SD Card (`GP22`) use o mesmo barramento sem interferência física. 
 
 ### Comandos de Configuração (SYS Target)
 Para alterar configurações na FPGA (como scanlines ou aspecto), o RP2040 envia pacotes síncronos de **4 bytes**:

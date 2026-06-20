@@ -11,14 +11,9 @@ void encoder_init(void) {
     gpio_set_dir(ENC_SW_PIN, GPIO_IN);
     gpio_pull_up(ENC_SW_PIN);
 
-    // Inicializa pino GP23 (Botão temporário de debug)
-    gpio_init(23);
-    gpio_set_dir(23, GPIO_IN);
-    gpio_pull_down(23);
-
-    // Inicializa pino GP25 (LED onboard para mostrar o clique)
-    gpio_init(25);
-    gpio_set_dir(25, GPIO_OUT);
+    // Inicializa pino LED onboard para mostrar o clique
+    gpio_init(ONBOARD_LED_PIN);
+    gpio_set_dir(ONBOARD_LED_PIN, GPIO_OUT);
 
     // 2. Adiciona o programa PIO no bloco pio0
     uint offset = pio_add_program(ENC_PIO, &encoder_program);
@@ -86,8 +81,8 @@ ButtonEvent encoder_check_button(void) {
     // Ativo em LOW para o botão do encoder (GP15)
     bool is_down = (gpio_get(ENC_SW_PIN) == 0); 
     
-    // Mostra o status do botão no LED onboard (GP25)
-    gpio_put(25, is_down);
+    // Mostra o status do botão no LED onboard
+    gpio_put(ONBOARD_LED_PIN, is_down);
     
     ButtonEvent event = BUTTON_NONE;
     
@@ -101,7 +96,7 @@ ButtonEvent encoder_check_button(void) {
             
         case BTN_STATE_DEBOUNCE_DOWN:
             if (is_down) {
-                if (now - last_state_change >= 40) { // Debounce de 40ms
+                if (now - last_state_change >= DEBOUNCE_ENC_BTN_MS) { // Debounce configurado
                     state = BTN_STATE_DOWN;
                     press_start_time = now;
                 }
