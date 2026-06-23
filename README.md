@@ -58,13 +58,13 @@ uint8_t cmd[4] = {
 *   **Voltar ao Jogo (Back to Game)** (Index 0): Single-click action. Returns the system to the play state (`STATE_JOGANDO`) without modifying the FPGA.
 *   **Reiniciar (Restart)** (Index 1): Single-click action. Sends a physical reset to the FPGA (ID `'R'` with `0x03` followed by `0x00`) and immediately returns the system to the game.
 *   **Scanlines (`'S'`)** (Index 2): `0` (Off), `1` (25%), `2` (50%), `3` (75%)
-*   **Volume (`'A'`)** (Index 3): `0` (Mute), `1` (33%), `2` (66%), `3` (100%)
-*   **Dificuldade P1 (`'X'`)** (Index 4): `0` (B - Easy), `1` (A - Hard)
-*   **Dificuldade P2 (`'Y'`)** (Index 5): `0` (B - Easy), `1` (A - Hard)
-*   **Ajuste Tela (`'W'`)** (Index 6): `0` (Normal 4:3), `1` (Wide 16:9) (Mapped as "Ajuste Tela" on the LCD)
-*   **Swap Joysticks (`'&'`)** (Index 7): `0` (Normal), `1` (Swap P1/P2 ports)
-*   **Padrao Video (`'E'`)** (Index 8): `0` (AUTO - reset on each new game), `1` (PAL), `2` (NTSC)
-*   **De-comb (`'C'`)** (Index 9): `0` (No), `1` (Yes)
+*   **De-comb (`'C'`)** (Index 3): `0` (No), `1` (Yes)
+*   **Volume (`'A'`)** (Index 4): `0` (Mute), `1` (33%), `2` (66%), `3` (100%)
+*   **Dificuldade P1 (`'X'`)** (Index 5): `0` (B - Easy), `1` (A - Hard)
+*   **Dificuldade P2 (`'Y'`)** (Index 6): `0` (B - Easy), `1` (A - Hard)
+*   **Ajuste Tela (`'W'`)** (Index 7): `0` (Normal 4:3), `1` (Wide 16:9) (Mapped as "Ajuste Tela" on the LCD)
+*   **Swap Joysticks (`'&'`)** (Index 8): `0` (Normal), `1` (Swap P1/P2 ports)
+*   **Padrao Video (`'E'`)** (Index 9): `0` (AUTO - reset on each new game), `1` (PAL), `2` (NTSC)
 *   **VBlank (`'M'`)** (Index 10): `0` (No), `1` (Yes)
 
 > [!NOTE]
@@ -119,7 +119,7 @@ stateDiagram-v2
     [*] --> STATE_SELECIONANDO : Boot
     STATE_SELECIONANDO --> STATE_JOGANDO : ROM Injection (Success)
     STATE_JOGANDO --> STATE_CONFIGURANDO : Quick Encoder Click
-    STATE_CONFIGURANDO --> STATE_JOGANDO : Select "Voltar ao Jogo"
+    STATE_CONFIGURANDO --> STATE_JOGANDO : "Voltar ao Jogo" or Long Click (1s)
     STATE_JOGANDO --> STATE_SELECIONANDO : Long Encoder Click (>1s)
 ```
 

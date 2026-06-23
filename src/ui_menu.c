@@ -22,13 +22,13 @@ static MenuOption menu_options[MENU_MAX_ITEMS] = {
     {"Voltar ao Jogo", '\0', 0, 0, NULL},
     {"Reiniciar", '\0', 0, 0, NULL},
     {"Scanlines", 'S', 2, 3, SCANLINES_LABELS},
+    {"De-comb", 'C', 0, 1, SWAP_LABELS},
     {"Volume", 'A', 2, 3, VOLUME_LABELS},
     {"Dificuldade P1", 'X', 0, 1, DIFFICULTY_LABELS},
     {"Dificuldade P2", 'Y', 0, 1, DIFFICULTY_LABELS},
     {"Ajuste Tela", 'W', 1, 1, ASPECT_LABELS},
     {"Swap Joysticks", '&', 0, 1, SWAP_LABELS},
     {"Padrao Video", 'E', 0, 2, VIDEO_LABELS},
-    {"De-comb", 'C', 0, 1, SWAP_LABELS},
     {"VBlank", 'M', 0, 1, SWAP_LABELS}
 };
 

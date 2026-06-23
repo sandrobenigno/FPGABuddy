@@ -58,13 +58,13 @@ uint8_t cmd[4] = {
 *   **Voltar ao Jogo** (Index 0): Ação de clique único. Retorna o sistema ao estado de jogo (`STATE_JOGANDO`) sem alterar a FPGA.
 *   **Reiniciar** (Index 1): Ação de clique único. Envia o reset físico para a FPGA (ID `'R'` com `0x03` seguido de `0x00`) e retorna o sistema imediatamente ao jogo.
 *   **Scanlines (`'S'`)** (Index 2): `0` (Desligado), `1` (25%), `2` (50%), `3` (75%)
-*   **Volume (`'A'`)** (Index 3): `0` (Mudo), `1` (33%), `2` (66%), `3` (100%)
-*   **Dificuldade P1 (`'X'`)** (Index 4): `0` (B - Fácil), `1` (A - Difícil)
-*   **Dificuldade P2 (`'Y'`)** (Index 5): `0` (B - Fácil), `1` (A - Difícil)
-*   **Ajuste Tela (`'W'`)** (Index 6): `0` (Normal 4:3), `1` (Wide 16:9) (Mapeado como "Ajuste Tela" no LCD)
-*   **Swap Joysticks (`'&'`)** (Index 7): `0` (Normal), `1` (Trocar portas P1/P2)
-*   **Padrão Vídeo (`'E'`)** (Index 8): `0` (AUTO - reiniciado a cada novo jogo), `1` (PAL), `2` (NTSC)
-*   **De-comb (`'C'`)** (Index 9): `0` (Não), `1` (Sim)
+*   **De-comb (`'C'`)** (Index 3): `0` (Não), `1` (Sim)
+*   **Volume (`'A'`)** (Index 4): `0` (Mudo), `1` (33%), `2` (66%), `3` (100%)
+*   **Dificuldade P1 (`'X'`)** (Index 5): `0` (B - Fácil), `1` (A - Difícil)
+*   **Dificuldade P2 (`'Y'`)** (Index 6): `0` (B - Fácil), `1` (A - Difícil)
+*   **Ajuste Tela (`'W'`)** (Index 7): `0` (Normal 4:3), `1` (Wide 16:9) (Mapeado como "Ajuste Tela" no LCD)
+*   **Swap Joysticks (`'&'`)** (Index 8): `0` (Normal), `1` (Trocar portas P1/P2)
+*   **Padrão Vídeo (`'E'`)** (Index 9): `0` (AUTO - reiniciado a cada novo jogo), `1` (PAL), `2` (NTSC)
 *   **VBlank (`'M'`)** (Index 10): `0` (Não), `1` (Sim)
 
 > [!NOTE]
@@ -119,7 +119,7 @@ stateDiagram-v2
     [*] --> STATE_SELECIONANDO : Boot
     STATE_SELECIONANDO --> STATE_JOGANDO : Injeção de ROM (Sucesso)
     STATE_JOGANDO --> STATE_CONFIGURANDO : Clique Rápido no Encoder
-    STATE_CONFIGURANDO --> STATE_JOGANDO : Selecionar "Voltar ao Jogo"
+    STATE_CONFIGURANDO --> STATE_JOGANDO : "Voltar ao Jogo" ou Clique Longo (1s)
     STATE_JOGANDO --> STATE_SELECIONANDO : Clique Longo (>1s)
 ```
 
