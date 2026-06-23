@@ -118,6 +118,8 @@ void fpga_send_all_configs(void) {
     }
 }
 
+extern FATFS fs;
+
 bool fpga_inject_rom(GameInfo* game) {
     ui_draw_message("LENDO DO SD...      ", "====================", game->nome, "Aguarde...          ");
 
@@ -130,8 +132,25 @@ bool fpga_inject_rom(GameInfo* game) {
         fr = f_open(&file, filepath, FA_READ);
     }
     
+    // Tenta re-inicializar e remontar o SD caso falhe a primeira abertura
     if (fr != FR_OK) {
-        printf("[ERRO] Arquivo ROM '%s' nao encontrado no SD.\n", filepath);
+        printf("[SD_RETRY] Falha inicial ao abrir ROM (erro: %d). Tentando re-inicializar barramento...\n", fr);
+        restore_sd_spi();
+        FRESULT mount_fr = f_mount(&fs, "", 1);
+        if (mount_fr == FR_OK) {
+            snprintf(filepath, sizeof(filepath), "/roms/%s.bin", game->md5);
+            fr = f_open(&file, filepath, FA_READ);
+            if (fr != FR_OK) {
+                snprintf(filepath, sizeof(filepath), "/%s.bin", game->md5);
+                fr = f_open(&file, filepath, FA_READ);
+            }
+        } else {
+            printf("[SD_RETRY] Falha ao remontar SD durante retry (erro: %d)\n", mount_fr);
+        }
+    }
+    
+    if (fr != FR_OK) {
+        printf("[ERRO] Arquivo ROM '%s' nao encontrado no SD apos retentativa.\n", filepath);
         ui_draw_message("  ROM NAO ENCONTR.  ", "====================", "Verifique o SD Card ", "Voltando...         ");
         sleep_ms(2000);
         return false;
@@ -148,10 +167,27 @@ bool fpga_inject_rom(GameInfo* game) {
     
     UINT bytes_read = 0;
     fr = f_read(&file, rom_buffer, file_size, &bytes_read);
-    f_close(&file);
+    
+    // Tenta re-inicializar caso falhe a leitura dos dados
+    if (fr != FR_OK || bytes_read != file_size) {
+        printf("[SD_RETRY] Falha ao ler dados da ROM (erro: %d, lidos: %u/%u). Tentando re-inicializar...\n", fr, bytes_read, (uint)file_size);
+        f_close(&file);
+        
+        restore_sd_spi();
+        FRESULT mount_fr = f_mount(&fs, "", 1);
+        if (mount_fr == FR_OK) {
+            fr = f_open(&file, filepath, FA_READ);
+            if (fr == FR_OK) {
+                fr = f_read(&file, rom_buffer, file_size, &bytes_read);
+                f_close(&file);
+            }
+        }
+    } else {
+        f_close(&file);
+    }
     
     if (fr != FR_OK || bytes_read != file_size) {
-        printf("[ERRO] Falha ao ler a ROM para o buffer. fr=%d, lidos=%d\n", fr, (int)bytes_read);
+        printf("[ERRO] Falha critica ao ler a ROM para o buffer apos retentativa. fr=%d, lidos=%d\n", fr, (int)bytes_read);
         ui_draw_message("  ERRO DE LEITURA   ", "====================", "Erro ao ler arquivo ", "Voltando...         ");
         sleep_ms(2000);
         return false;

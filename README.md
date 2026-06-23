@@ -156,6 +156,7 @@ To solve this, we implemented the **`spi_loader_san.v`** module in the FPGA (act
 To keep this flow stable without locking up the system:
 1. **Bus Recovery**: We call `claim_spi_bus()` to reconfigure the SPI0 speed and mode to Mode 1 (`SPI_CPOL_0, SPI_CPHA_1`) required by the FPGA before transmitting data.
 2. **Preventing DMA Exhaustion**: The SD Card driver (`no-OS-FatFS-SD-SDIO-SPI-RPi-Pico`) allocates RP2040 DMA channels upon each physical initialization. To prevent exhausting the chip's 12 DMA channels (which causes panic/system crashes due to lack of resources), we manually release the previous channels using `dma_channel_unclaim()` before re-initializing the SD Card when returning to the game menu.
+3. **SPI Frequency & Auto-Recovery**: The SD Card is configured to run at **4 MHz** (rather than 8 MHz) in `src/hw_config.c` to improve signal integrity and robustness on prototype wiring. Additionally, `fpga_inject_rom()` implements an **auto-recovery mechanism**: if a file open/read operation fails due to transient bus issues or mechanical contact glitches during button clicks, it automatically resets the SPI bus, remounts the SD card, and retries the operation.
 
 ### C. Design Philosophy and Expandability (Physical Cartridge Board)
 The FPGA core was simplified with the **complete exclusion** of complex internal modules that tried to mount the SD Card locally. This deliberate removal aims to keep the FPGA core as a pure slave to the companion.

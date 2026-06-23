@@ -13,7 +13,7 @@
 #include "config.h"
 
 // Objeto de sistema de arquivos global do FatFs
-static FATFS fs;
+FATFS fs;
 
 // Função nativa do SDK para verificar conexão USB CDC
 extern bool stdio_usb_connected(void);
