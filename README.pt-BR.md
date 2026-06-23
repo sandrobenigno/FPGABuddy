@@ -135,9 +135,9 @@ stateDiagram-v2
 * **`STATE_CONFIGURANDO` (Menu de Configurações Rápidas)**:
   * Entra ao dar um clique rápido no encoder durante o jogo.
   * O LED RGB onboard fica na cor **Vermelho** (`127, 0, 0`).
-  * O clique longo de retorno ao menu é desativado neste estado; a saída deve ser feita exclusivamente pela opção "Voltar ao Jogo".
+  * O clique longo no encoder (1s) comuta o SPI de volta para o SD, remonta a partição FatFs e retorna para a lista de jogos, assim como no `STATE_JOGANDO`.
   * **Modo Navegação (`edit_mode = false`)**: Girar o encoder move o cursor `>` pelas opções.
-  * **Modo Edição (`edit_mode = true`)**: Entra ao clicar em um parâmetro. O valor do parâmetro fica envolvido por colchetes estáticos (ex: `> Ajuste Tela:[16:9]`). Para reduzir a latência de tráfego I2C e tornar a leitura do encoder/botão mais fluida, **a piscagem (blink) do valor foi desativada**. Girar o encoder altera o valor imediatamente na tela. Clicar novamente confirma e envia via SPI para a FPGA.
+  * **Modo Edição (`edit_mode = true`)**: Entra ao clicar em um parâmetro. O valor do parâmetro fica envolvido por colchetes estáticos (ex: `> Ajuste Tela:[16:9]`). **A piscagem (blink) do valor está ativa** a uma taxa de 250ms para indicar o modo de edição (tornada fluida devido ao aumento da frequência do LCD). Girar o encoder altera o valor imediatamente na tela. Clicar novamente confirma e envia via SPI para a FPGA.
 
 ---
 

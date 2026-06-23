@@ -97,7 +97,16 @@ void ui_draw_quick_settings_line(int row, int item_idx, bool is_focused, bool is
     } else {
         const char *val_str = opt.value_labels[opt.value];
         if (is_focused && is_editing) {
-            snprintf(line_buf, sizeof(line_buf), "> %s:[%s]", opt.label, val_str);
+            if (blink_state) {
+                snprintf(line_buf, sizeof(line_buf), "> %s:[%s]", opt.label, val_str);
+            } else {
+                int val_len = strlen(val_str);
+                char spaces[16];
+                if (val_len > 15) val_len = 15;
+                memset(spaces, ' ', val_len);
+                spaces[val_len] = '\0';
+                snprintf(line_buf, sizeof(line_buf), "> %s:[%s]", opt.label, spaces);
+            }
         } else {
             snprintf(line_buf, sizeof(line_buf), "%s %s: %s", is_focused ? ">" : " ", opt.label, val_str);
         }

@@ -194,57 +194,61 @@ static void handle_state_selecionando(uint32_t now) {
     sleep_ms(5);
 }
 
+static void return_to_rom_menu(void) {
+    printf("[SISTEMA] Clique longo de 1s! Solicitando retorno ao menu...\n");
+    
+    // Força a saída do modo de edição se estiver nele
+    edit_mode = false;
+    
+    ui_draw_message(" CARREGANDO MENU... ", "====================", "Aguarde...          ", "                    ");
+    
+    fpga_set_rgb(COLOR_RGB_SELECT_R, COLOR_RGB_SELECT_G, COLOR_RGB_SELECT_B);
+    
+    // Remonta o Cartão SD e reabre o Banco de Dados
+    printf("[SISTEMA] Reativando barramento SPI0 para o Cartao SD...\n");
+    
+    restore_sd_spi();
+    
+    FRESULT fr = f_mount(&fs, "", 1);
+    sd_ok = (fr == FR_OK);
+    if (sd_ok) {
+        db_ok = db_init();
+    } else {
+        printf("[ERRO] Falha ao remontar o Cartao SD (f_mount falhou: %d - %s)\n", fr, FRESULT_str(fr));
+    }
+    
+    // Se remontado com sucesso, recarrega a listagem de jogos da letra atual
+    if (db_ok) {
+        char current_letter = CATEGORIES[category_idx];
+        safe_free_game_list();
+        db_fetch_games_by_letter(current_letter, &game_list, &game_count);
+        
+        // Transiciona de volta para a lista de jogos!
+        sel_substate = SUBSTATE_GAME_LIST;
+        current_state = STATE_SELECIONANDO;
+        
+        char title[21];
+        snprintf(title, sizeof(title), "-> LETRA %c (%d)", current_letter, game_count);
+        if (game_count > 0) {
+            char line[21];
+            snprintf(line, sizeof(line), "%s", game_list[selected_idx].nome);
+            ui_draw_message(title, "====================", line, "Gire: Nav | Clique: OK");
+        } else {
+            ui_draw_message(title, "====================", "Sem jogos cadastrad.", "Segure 1s p/ voltar ");
+        }
+    }
+    
+    printf("\n============================================\n");
+    printf("[SISTEMA] Estado alterado para: SELECIONANDO (Lista de Jogos)\n");
+    printf("[SISTEMA] Barramento SPI0 ativo.\n");
+    printf("============================================\n\n");
+}
+
 static void handle_state_jogando(uint32_t now) {
     ButtonEvent btn_event = encoder_check_button();
     
     if (btn_event == BUTTON_LONG_PRESS) {
-        printf("[SISTEMA] Clique longo de 1s! Solicitando retorno ao menu...\n");
-        
-        // Força a saída do modo de edição se estiver nele
-        edit_mode = false;
-        
-        ui_draw_message(" CARREGANDO MENU... ", "====================", "Aguarde...          ", "                    ");
-        
-        fpga_set_rgb(COLOR_RGB_SELECT_R, COLOR_RGB_SELECT_G, COLOR_RGB_SELECT_B);
-        
-        // Remonta o Cartão SD e reabre o Banco de Dados
-        printf("[SISTEMA] Reativando barramento SPI0 para o Cartao SD...\n");
-        
-        restore_sd_spi();
-        
-        FRESULT fr = f_mount(&fs, "", 1);
-        sd_ok = (fr == FR_OK);
-        if (sd_ok) {
-            db_ok = db_init();
-        } else {
-            printf("[ERRO] Falha ao remontar o Cartao SD (f_mount falhou: %d - %s)\n", fr, FRESULT_str(fr));
-        }
-        
-        // Se remontado com sucesso, recarrega a listagem de jogos da letra atual
-        if (db_ok) {
-            char current_letter = CATEGORIES[category_idx];
-            safe_free_game_list();
-            db_fetch_games_by_letter(current_letter, &game_list, &game_count);
-            
-            // Transiciona de volta para a lista de jogos!
-            sel_substate = SUBSTATE_GAME_LIST;
-            current_state = STATE_SELECIONANDO;
-            
-            char title[21];
-            snprintf(title, sizeof(title), "-> LETRA %c (%d)", current_letter, game_count);
-            if (game_count > 0) {
-                char line[21];
-                snprintf(line, sizeof(line), "%s", game_list[selected_idx].nome);
-                ui_draw_message(title, "====================", line, "Gire: Nav | Clique: OK");
-            } else {
-                ui_draw_message(title, "====================", "Sem jogos cadastrad.", "Segure 1s p/ voltar ");
-            }
-        }
-        
-        printf("\n============================================\n");
-        printf("[SISTEMA] Estado alterado para: SELECIONANDO (Lista de Jogos)\n");
-        printf("[SISTEMA] Barramento SPI0 ativo.\n");
-        printf("============================================\n\n");
+        return_to_rom_menu();
     } else {
         // Polling do botão auxiliar GP3 para F1 Select (com 30ms de debounce)
         static bool last_gp3_state = false;
@@ -279,6 +283,15 @@ static void handle_state_jogando(uint32_t now) {
 static void handle_state_configurando(uint32_t now) {
     ButtonEvent btn_event = encoder_check_button();
     int32_t rot = encoder_get_rotation();
+    
+    if (btn_event == BUTTON_LONG_PRESS) {
+        edit_mode = false;
+        current_state = STATE_JOGANDO;
+        fpga_set_rgb(COLOR_RGB_PLAY_R, COLOR_RGB_PLAY_G, COLOR_RGB_PLAY_B);
+        ui_draw_message("CONSOLE ATIVO       ", "====================", active_game_name, "Segure 1s p/ voltar ");
+        printf("[SISTEMA] Voltando para a gameplay (via clique longo)\n");
+        return;
+    }
     
     if (!edit_mode) {
         // MODO NAVEGAÇÃO
@@ -330,6 +343,14 @@ static void handle_state_configurando(uint32_t now) {
         }
     } else {
         // MODO EDIÇÃO
+        // Toca o piscar a cada 250ms se não houver rotação recente
+        if (now - last_blink_time >= 250) {
+            last_blink_time = now;
+            blink_state = !blink_state;
+            int row = 1 + (menu_focus - menu_scroll);
+            ui_draw_quick_settings_line(row, menu_focus, true, true, blink_state);
+        }
+
         if (rot != 0) {
             MenuOption* opt = ui_get_menu_option(menu_focus);
             int val = (int)opt->value + rot;

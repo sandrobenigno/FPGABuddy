@@ -135,9 +135,9 @@ stateDiagram-v2
 * **`STATE_CONFIGURANDO` (Quick Settings Menu)**:
   * Entered via a quick click on the encoder during the game.
   * The onboard RGB LED turns **Red** (`127, 0, 0`).
-  * Long press to return to the menu is disabled in this state; exit must be done exclusively through the "Voltar ao Jogo" (Back to Game) option.
+  * A long press on the encoder (1s) switches SPI back to the SD, remounts the FatFs partition, and returns to the game list, just like in `STATE_JOGANDO`.
   * **Navigation Mode (`edit_mode = false`)**: Rotating the encoder moves the cursor `>` through the options.
-  * **Edit Mode (`edit_mode = true`)**: Entered by clicking a parameter. The parameter value is enclosed in static brackets (e.g. `> Ajuste Tela:[16:9]`). To reduce I2C traffic latency and make encoder/button readings more fluid, **value blinking has been disabled**. Rotating the encoder changes the value immediately on the screen. Clicking again confirms and sends it via SPI to the FPGA.
+  * **Edit Mode (`edit_mode = true`)**: Entered by clicking a parameter. The parameter value is enclosed in static brackets (e.g. `> Ajuste Tela:[16:9]`). **Value blinking is active** at a 250ms rate to indicate editing mode (made fluid due to the increased LCD frequency). Rotating the encoder changes the value immediately on the screen. Clicking again confirms and sends it via SPI to the FPGA.
 
 ---
 
