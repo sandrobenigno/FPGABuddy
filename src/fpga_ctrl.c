@@ -303,3 +303,32 @@ void fpga_send_mouse(uint8_t buttons, int8_t dx, int8_t dy) {
     // Restaura o formato SPI para o modo esperado pelo cartão SD (SPI Mode 0)
     spi_set_format(spi0, 8, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
 }
+
+void fpga_osd_set_visible(bool visible) {
+    claim_spi_bus();
+    
+    uint8_t packet[3] = {
+        0x02, // Target 2 (OSD)
+        0x01, // CMD 1 (Control)
+        visible ? 0x01 : 0x00
+    };
+    fpga_spi_transaction(packet, 3, NULL, 0);
+    
+    // Restaura o formato SPI para o modo esperado pelo cartão SD (SPI Mode 0)
+    spi_set_format(spi0, 8, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
+}
+
+void fpga_osd_write_buffer(const uint8_t *buffer) {
+    claim_spi_bus();
+    
+    uint8_t header[3] = {
+        0x02, // Target 2 (OSD)
+        0x02, // CMD 2 (Write)
+        0x00  // Coluna inicial = 0
+    };
+    fpga_spi_transaction(header, 3, buffer, 1024);
+    
+    // Restaura o formato SPI para o modo esperado pelo cartão SD (SPI Mode 0)
+    spi_set_format(spi0, 8, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
+}
+

@@ -33,5 +33,10 @@ void fpga_send_key(uint8_t keycode, bool pressed);
 // Sends mouse click and movement to FPGA (Target 0x01, CMD 0x02)
 void fpga_send_mouse(uint8_t buttons, int8_t dx, int8_t dy);
 
+// FPGA OSD Controls (Target 0x02)
+void fpga_osd_set_visible(bool visible);
+void fpga_osd_write_buffer(const uint8_t *buffer);
+
+
 
 

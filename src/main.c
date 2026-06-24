@@ -133,11 +133,7 @@ static void handle_state_selecionando(uint32_t now) {
             
             printf("[MENU] Selecionando jogo: [%d] %s\n", selected_idx + 1, game_list[selected_idx].nome);
             
-            if (ui_is_lcd_ok()) {
-                char line[21];
-                snprintf(line, sizeof(line), "%s", game_list[selected_idx].nome);
-                lcd_write_line(2, line);
-            }
+            ui_write_game_line(game_list[selected_idx].nome);
         }
         
         if (btn_event == BUTTON_CLICK) {
@@ -154,6 +150,7 @@ static void handle_state_selecionando(uint32_t now) {
                     // Transiciona para o estado JOGANDO
                     current_state = STATE_JOGANDO;
                     fpga_set_rgb(COLOR_RGB_PLAY_R, COLOR_RGB_PLAY_G, COLOR_RGB_PLAY_B);
+                    fpga_osd_set_visible(false);
                     printf("\n============================================\n");
                     printf("[SISTEMA] Estado alterado para: JOGANDO\n");
                     printf("[SISTEMA] SPI activa, console rodando da RAM.\n");
@@ -200,6 +197,7 @@ static void return_to_rom_menu(void) {
     // Força a saída do modo de edição se estiver nele
     edit_mode = false;
     
+    fpga_osd_set_visible(true);
     ui_draw_message(" CARREGANDO MENU... ", "====================", "Aguarde...          ", "                    ");
     
     fpga_set_rgb(COLOR_RGB_SELECT_R, COLOR_RGB_SELECT_G, COLOR_RGB_SELECT_B);
@@ -265,6 +263,7 @@ static void handle_state_jogando(uint32_t now) {
             // Transiciona para o menu de configurações rápidas!
             current_state = STATE_CONFIGURANDO;
             fpga_set_rgb(COLOR_RGB_CONFIG_R, COLOR_RGB_CONFIG_G, COLOR_RGB_CONFIG_B);
+            fpga_osd_set_visible(true);
             edit_mode = false;
             menu_focus = 1; // Inicia selecionado em "Reiniciar"
             menu_scroll = 0;
@@ -288,6 +287,7 @@ static void handle_state_configurando(uint32_t now) {
         edit_mode = false;
         current_state = STATE_JOGANDO;
         fpga_set_rgb(COLOR_RGB_PLAY_R, COLOR_RGB_PLAY_G, COLOR_RGB_PLAY_B);
+        fpga_osd_set_visible(false);
         ui_draw_message("CONSOLE ATIVO       ", "====================", active_game_name, "Segure 1s p/ voltar ");
         printf("[SISTEMA] Voltando para a gameplay (via clique longo)\n");
         return;
@@ -322,6 +322,7 @@ static void handle_state_configurando(uint32_t now) {
                 // Voltar ao Jogo
                 current_state = STATE_JOGANDO;
                 fpga_set_rgb(COLOR_RGB_PLAY_R, COLOR_RGB_PLAY_G, COLOR_RGB_PLAY_B);
+                fpga_osd_set_visible(false);
                 ui_draw_message("CONSOLE ATIVO       ", "====================", active_game_name, "Segure 1s p/ voltar ");
                 printf("[SISTEMA] Voltando para a gameplay\n");
             } else if (menu_focus == 1) {
@@ -330,6 +331,7 @@ static void handle_state_configurando(uint32_t now) {
                 fpga_reset_core();
                 current_state = STATE_JOGANDO;
                 fpga_set_rgb(COLOR_RGB_PLAY_R, COLOR_RGB_PLAY_G, COLOR_RGB_PLAY_B);
+                fpga_osd_set_visible(false);
                 ui_draw_message("CONSOLE ATIVO       ", "====================", active_game_name, "Segure 1s p/ voltar ");
             } else {
                 // Entra no modo de edição da opção
@@ -521,6 +523,9 @@ int main() {
     } else {
         printf("[DEBUG_FPGA] AVISO! Resposta inesperada ou nula da FPGA. Verifique a fiação e o Level Shifter.\n");
     }
+
+    // Garante que o OSD esteja visível no início do menu de seleção
+    fpga_osd_set_visible(true);
 
     // Inicializa a tela com o Grid de Letras se o banco estiver operante
     ui_draw_message(" SELECIONE A LETRA  ", NULL, NULL, NULL);
