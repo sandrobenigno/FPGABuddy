@@ -6,7 +6,7 @@
 
 ## 1. Visão Geral do Sistema
 O **FPGABuddy** é um firmware para o microcontrolador **Raspberry Pi Pico (RP2040)** que atua como companion (coprocessador) para um core de **Atari 2600** executado em uma FPGA **Tang Nano 20k**. 
-* O RP2040 gerencia o cartão SD (FAT32), processa um banco de dados de ROMs local (`src/db.c`), renderiza a interface em um display LCD 20x4 I2C (`src/lcd_20x4.c`) e faz a injeção física das ROMs diretamente na memória da FPGA via barramento SPI0.
+* O RP2040 gerencia o cartão SD (FAT32), processa um banco de dados de ROMs local (`src/db.c`), renderiza a interface em um display LCD 20x4 I2C (`src/lcd_20x4.c`) e, concorrentemente nos estados de seleção e configuração, no **OSD (On-Screen Display) gráfico interno da FPGA** ($128 \times 64$ pixels, 1 bit, via Target SPI `0x02`), além de fazer a injeção física das ROMs diretamente na memória da FPGA via barramento SPI0.
 * Ele também oferece um **Menu de Configurações Rápidas** durante a gameplay para alterar parâmetros da FPGA em tempo real.
 
 ---
@@ -103,6 +103,27 @@ uint8_t cmd[4] = {
     };
     ```
 
+### Comandos do Target OSD (2)
+*   **Controle de Exibição (OSD Target, CMD 1)**:
+    Envia pacotes de **3 bytes** para ligar/desligar a exibição do OSD:
+    ```c
+    uint8_t cmd[3] = {
+        0x02, // Target 2 (OSD)
+        0x01, // CMD 1 (Controle)
+        state // Estado: 0x01 para exibir, 0x00 para ocultar
+    };
+    ```
+*   **Escrita no Frame Buffer (OSD Target, CMD 2)**:
+    Envia o bitmap de imagem de $128 \times 64$ pixels ($1024 \text{ bytes}$, 1 bit/pixel) para a memória interna do OSD na FPGA:
+    ```c
+    uint8_t cmd[3] = {
+        0x02, // Target 2 (OSD)
+        0x02, // CMD 2 (Escrita)
+        0x00  // Coluna inicial (0 a 127)
+    };
+    // Seguido pelo envio contínuo dos 1024 bytes de dados de imagem no formato de varredura de páginas horizontais: { Página[2:0], Coluna[6:0] }
+    ```
+
 ---
 
 ## 4. Estrutura do Firmware (Arquitetura Modular)
@@ -125,19 +146,19 @@ stateDiagram-v2
 
 ### Detalhes dos Estados e Ajustes Finos:
 * **`STATE_SELECIONANDO`**:
-  * O LCD renderiza um grid de letras para busca alfabética de ROMs e, em seguida, a lista de jogos da letra selecionada.
+  * O LCD renderiza um grid de letras para busca alfabética de ROMs e, em seguida, a lista de jogos da letra selecionada. Concorrentemente, a interface é desenhada no **OSD gráfico da FPGA** (centralizada verticalmente com 2px de espaçamento entre as linhas).
   * O cursor do menu preserva a posição do último jogo carregado ao retornar.
   * O LED RGB onboard fica na cor **Verde** (`0, 127, 0`) para sinalizar este estado.
 * **`STATE_JOGANDO`**:
-  * A FPGA executa o jogo. O LCD exibe o nome do jogo ativo e a instrução de retorno.
+  * A FPGA executa o jogo. O LCD exibe o nome do jogo ativo e a instrução de retorno. O **OSD gráfico da FPGA é ocultado automaticamente** nesta etapa.
   * O LED RGB onboard fica na cor **Azul** (`0, 0, 127`) para sinalizar o console ativo.
-  * O clique longo do encoder (1s) comuta o SPI de volta para o SD, remonta a partição FatFs e retorna para a lista de jogos **sem resetar a FPGA** (a gameplay permanece ativa em background). O reset completo e ejeção de cartucho só ocorrem ao injetar uma nova ROM.
+  * O clique longo do encoder (1s) comuta o SPI de volta para o SD, remonta a partição FatFs e retorna para a lista de jogos **sem resetar a FPGA** (a gameplay permanece activa em background). O reset completo e ejeção de cartucho só ocorrem ao injetar uma nova ROM.
 * **`STATE_CONFIGURANDO` (Menu de Configurações Rápidas)**:
-  * Entra ao dar um clique rápido no encoder durante o jogo.
+  * Entra ao dar um clique rápido no encoder durante o jogo. O **OSD gráfico da FPGA torna-se visível** na tela de TV/monitor de forma concorrente ao LCD de texto.
   * O LED RGB onboard fica na cor **Vermelho** (`127, 0, 0`).
   * O clique longo no encoder (1s) comuta o SPI de volta para o SD, remonta a partição FatFs e retorna para a lista de jogos, assim como no `STATE_JOGANDO`.
   * **Modo Navegação (`edit_mode = false`)**: Girar o encoder move o cursor `>` pelas opções.
-  * **Modo Edição (`edit_mode = true`)**: Entra ao clicar em um parâmetro. O valor do parâmetro fica envolvido por colchetes estáticos (ex: `> Ajuste Tela:[16:9]`). **A piscagem (blink) do valor está ativa** a uma taxa de 250ms para indicar o modo de edição (tornada fluida devido ao aumento da frequência do LCD). Girar o encoder altera o valor imediatamente na tela. Clicar novamente confirma e envia via SPI para a FPGA.
+  * **Modo Edição (`edit_mode = true`)**: Entra ao clicar em um parâmetro. O valor do parâmetro fica envolvido por colchetes estáticos (ex: `> Ajuste Tela:[16:9]`). **A piscagem (blink) do valor está ativa** a uma taxa de 250ms para indicar o modo de edição (tornada fluida devido ao aumento da frequência do LCD). Girar o encoder altera o valor imediatamente na tela (tanto no LCD texto quanto no OSD gráfico). Clicar novamente confirma e envia via SPI para a FPGA.
 
 ---
 
@@ -172,8 +193,9 @@ Essa arquitetura de injeção direta via SPI (`Target 3, CMD 8`) estabelece a ba
 
 * `CMakeLists.txt`: Script de compilação do Pico SDK e sources do companion.
 * `src/main.c`: Máquina de estados principal e fluxo de execução do companion.
-* `src/ui_menu.c` / `src/ui_menu.h`: Definição de menus e rotinas do display LCD 20x4.
-* `src/fpga_ctrl.c` / `src/fpga_ctrl.h`: Abstração de controle, injeção de ROM, LED RGB e escrita HID.
+* `src/ui_menu.c` / `src/ui_menu.h`: Definição de menus e rotinas do display LCD 20x4 e do OSD.
+* `src/font_5x8.h`: Tabela de fonte bitmap 5x8 para renderização ASCII no OSD da FPGA.
+* `src/fpga_ctrl.c` / `src/fpga_ctrl.h`: Abstração de controle, injeção de ROM, LED RGB, escrita HID e controle OSD.
 * `src/encoder.c` / `src/encoder.pio`: Leitura de alta fidelidade do encoder rotativo via máquina de estados PIO.
 * `src/lcd_20x4.c`: Abstração de controle de hardware I2C do display LCD 20x4.
 * `src/db.c`: Leitura do banco de dados binário de jogos no cartão SD.

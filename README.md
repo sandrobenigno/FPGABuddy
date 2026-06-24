@@ -6,7 +6,7 @@
 
 ## 1. System Overview
 **FPGABuddy** is a firmware for the **Raspberry Pi Pico (RP2040)** microcontroller that acts as a companion (coprocessor) for an **Atari 2600** core running on a **Tang Nano 20k** FPGA.
-* The RP2040 manages the SD card (FAT32), processes a local ROM database (`src/db.c`), renders the interface on an I2C 20x4 LCD display (`src/lcd_20x4.c`), and physically injects ROMs directly into the FPGA memory via the SPI0 bus.
+* The RP2040 manages the SD card (FAT32), processes a local ROM database (`src/db.c`), renders the interface on an I2C 20x4 LCD display (`src/lcd_20x4.c`) and concurrently, in the selection and configuration states, on the **graphical on-screen-display (OSD) module inside the FPGA** ($128 \times 64$ pixels, 1-bit, via Target SPI `0x02`), and physically injects ROMs directly into the FPGA memory via the SPI0 bus.
 * It also offers a **Quick Settings Menu** during gameplay to change FPGA parameters in real time.
 
 ---
@@ -103,6 +103,27 @@ uint8_t cmd[4] = {
     };
     ```
 
+### Target OSD (2) Commands
+*   **Display Control (OSD Target, CMD 1)**:
+    Sends **3-byte** packets to turn OSD visibility on/off:
+    ```c
+    uint8_t cmd[3] = {
+        0x02, // Target 2 (OSD)
+        0x01, // CMD 1 (Control)
+        state // State: 0x01 to show, 0x00 to hide
+    };
+    ```
+*   **Frame Buffer Write (OSD Target, CMD 2)**:
+    Sends a $128 \times 64$ pixels bitmap image ($1024 \text{ bytes}$, 1 bit/pixel) to the internal OSD memory in the FPGA:
+    ```c
+    uint8_t cmd[3] = {
+        0x02, // Target 2 (OSD)
+        0x02, // CMD 2 (Write)
+        0x00  // Initial column (0 to 127)
+    };
+    // Followed by a continuous stream of the 1024 bytes of image data in horizontal page-scan layout: { Page[2:0], Column[6:0] }
+    ```
+
 ---
 
 ## 4. Firmware Structure (Modular Architecture)
@@ -125,19 +146,19 @@ stateDiagram-v2
 
 ### Details of the States and Fine-Tuning:
 * **`STATE_SELECIONANDO`**:
-  * The LCD renders a grid of letters for alphabetical search of ROMs, followed by the game list for the selected letter.
+  * The LCD renders a grid of letters for alphabetical search of ROMs, followed by the game list for the selected letter. Concurrently, the interface is drawn on the **FPGA graphical OSD** (vertically centered with a 2px spacing between lines).
   * The menu cursor preserves the position of the last loaded game upon returning.
   * The onboard RGB LED turns **Green** (`0, 127, 0`) to signal this state.
 * **`STATE_JOGANDO`**:
-  * The FPGA runs the game. The LCD displays the active game name and instructions to return.
+  * The FPGA runs the game. The LCD displays the active game name and instructions to return. The **FPGA graphical OSD is automatically hidden** in this state.
   * The onboard RGB LED turns **Blue** (`0, 0, 127`) to signal the active console.
   * A long press on the encoder (1s) switches SPI back to the SD, remounts the FatFs partition, and returns to the game list **without resetting the FPGA** (gameplay remains active in the background). A complete reset and cartridge ejection only occur when injecting a new ROM.
 * **`STATE_CONFIGURANDO` (Quick Settings Menu)**:
-  * Entered via a quick click on the encoder during the game.
+  * Entered via a quick click on the encoder during the game. The **FPGA graphical OSD becomes visible** on the TV/monitor screen concurrently to the I2C text LCD.
   * The onboard RGB LED turns **Red** (`127, 0, 0`).
   * A long press on the encoder (1s) switches SPI back to the SD, remounts the FatFs partition, and returns to the game list, just like in `STATE_JOGANDO`.
   * **Navigation Mode (`edit_mode = false`)**: Rotating the encoder moves the cursor `>` through the options.
-  * **Edit Mode (`edit_mode = true`)**: Entered by clicking a parameter. The parameter value is enclosed in static brackets (e.g. `> Ajuste Tela:[16:9]`). **Value blinking is active** at a 250ms rate to indicate editing mode (made fluid due to the increased LCD frequency). Rotating the encoder changes the value immediately on the screen. Clicking again confirms and sends it via SPI to the FPGA.
+  * **Edit Mode (`edit_mode = true`)**: Entered by clicking a parameter. The parameter value is enclosed in static brackets (e.g. `> Ajuste Tela:[16:9]`). **Value blinking is active** at a 250ms rate to indicate editing mode (made fluid due to the increased LCD frequency). Rotating the encoder changes the value immediately on the screen (both on the text LCD and the graphical OSD). Clicking again confirms and sends it via SPI to the FPGA.
 
 ---
 
@@ -172,8 +193,9 @@ This direct SPI injection architecture (`Target 3, CMD 8`) establishes the found
 
 * `CMakeLists.txt`: Build script for the Pico SDK and companion sources.
 * `src/main.c`: Main state machine and execution flow of the companion.
-* `src/ui_menu.c` / `src/ui_menu.h`: Menu definitions and LCD 20x4 routines.
-* `src/fpga_ctrl.c` / `src/fpga_ctrl.h`: Control abstraction, ROM injection, RGB LED, and HID writing.
+* `src/ui_menu.c` / `src/ui_menu.h`: Menu definitions and display routines for the LCD 20x4 and OSD.
+* `src/font_5x8.h`: Bitmap 5x8 font table for ASCII rendering on the FPGA OSD.
+* `src/fpga_ctrl.c` / `src/fpga_ctrl.h`: Control abstraction, ROM injection, RGB LED, HID writing, and OSD control.
 * `src/encoder.c` / `src/encoder.pio`: High-fidelity rotary encoder reading via PIO state machine.
 * `src/lcd_20x4.c`: I2C hardware control abstraction for the LCD 20x4 display.
 * `src/db.c`: Local binary ROM database reading on the SD Card.
