@@ -326,9 +326,11 @@ static void handle_state_configurando(uint32_t now) {
                 ui_draw_message("CONSOLE ATIVO       ", "====================", active_game_name, "Segure 1s p/ voltar ");
                 printf("[SISTEMA] Voltando para a gameplay\n");
             } else if (menu_focus == 1) {
-                // Reiniciar
-                printf("[SISTEMA] Reiniciando o console...\n");
-                fpga_reset_core();
+                // Game Reset (Tecla F2)
+                printf("[SISTEMA] Executando Game Reset...\n");
+                fpga_send_key(0x3b, true);
+                sleep_ms(150);
+                fpga_send_key(0x3b, false);
                 current_state = STATE_JOGANDO;
                 fpga_set_rgb(COLOR_RGB_PLAY_R, COLOR_RGB_PLAY_G, COLOR_RGB_PLAY_B);
                 fpga_osd_set_visible(false);

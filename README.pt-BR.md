@@ -56,7 +56,7 @@ uint8_t cmd[4] = {
 
 #### Estrutura do Menu de Configurações Rápidas (`menu_options`):
 *   **Voltar ao Jogo** (Index 0): Ação de clique único. Retorna o sistema ao estado de jogo (`STATE_JOGANDO`) sem alterar a FPGA.
-*   **Reiniciar** (Index 1): Ação de clique único. Envia o reset físico para a FPGA (ID `'R'` com `0x03` seguido de `0x00`) e retorna o sistema imediatamente ao jogo.
+*   **Reiniciar (Game Reset)** (Index 1): Ação de clique único. Simula a chave física de Game Reset do console Atari transmitindo os eventos de pressionar e soltar a tecla de teclado **F2** (`0x3B`), retornando o sistema imediatamente ao estado de jogo.
 *   **Scanlines (`'S'`)** (Index 2): `0` (Desligado), `1` (25%), `2` (50%), `3` (75%)
 *   **De-comb (`'C'`)** (Index 3): `0` (Não), `1` (Sim)
 *   **Volume (`'A'`)** (Index 4): `0` (Mudo), `1` (33%), `2` (66%), `3` (100%)
