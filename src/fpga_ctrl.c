@@ -108,12 +108,28 @@ void restore_sd_spi(void) {
     }
 }
 
+void fpga_send_controls_config(uint8_t mode) {
+    if (mode == 0) { // JOY
+        fpga_send_config('Q', 4);
+        fpga_send_config('J', 5);
+    } else { // PAD
+        fpga_send_config('Q', 9);
+        fpga_send_config('J', 10);
+    }
+}
+
 void fpga_send_all_configs(void) {
     fpga_set_color_mode(true);
     
     for (int i = 1; i < MENU_MAX_ITEMS; i++) {
         MenuOption* opt = ui_get_menu_option(i);
-        if (!opt || opt->id == '\0') continue;
+        if (!opt) continue;
+        if (opt->id == '\0') {
+            if (strcmp(opt->label, "Controles") == 0) {
+                fpga_send_controls_config(opt->value);
+            }
+            continue;
+        }
         fpga_send_config(opt->id, opt->value);
     }
 }

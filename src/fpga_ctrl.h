@@ -12,6 +12,7 @@ void restore_sd_spi(void);
 
 void fpga_set_color_mode(bool color);
 void fpga_send_config(char id, uint8_t value);
+void fpga_send_controls_config(uint8_t mode);
 void fpga_send_all_configs(void);
 
 // Injects the ROM reading from SD to buffer and sending to FPGA via SPI

@@ -374,8 +374,13 @@ static void handle_state_configurando(uint32_t now) {
             uint8_t target_val = opt->value;
             char target_id = opt->id;
             
-            printf("[SPI] Enviando config '%c' = %d para a FPGA...\n", target_id, target_val);
-            fpga_send_config(target_id, target_val);
+            if (target_id == '\0' && strcmp(opt->label, "Controles") == 0) {
+                printf("[SPI] Enviando config de Controles: %s para a FPGA...\n", opt->value_labels[target_val]);
+                fpga_send_controls_config(target_val);
+            } else if (target_id != '\0') {
+                printf("[SPI] Enviando config '%c' = %d para a FPGA...\n", target_id, target_val);
+                fpga_send_config(target_id, target_val);
+            }
             
             // Sai do modo de edição
             edit_mode = false;
