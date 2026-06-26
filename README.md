@@ -66,6 +66,7 @@ uint8_t cmd[4] = {
 *   **Swap Joysticks (`'&'`)** (Index 8): `0` (Normal), `1` (Swap P1/P2 ports)
 *   **Padrao Video (`'E'`)** (Index 9): `0` (AUTO - reset on each new game), `1` (PAL), `2` (NTSC)
 *   **VBlank (`'M'`)** (Index 10): `0` (No), `1` (Yes)
+*   **Controles** (Index 11): `0` (JOY), `1` (PAD). Selecting `JOY` sends value `4` to Port 1 (ID `'Q'`) and value `5` to Port 2 (ID `'J'`). Selecting `PAD` sends value `9` to Port 1 (ID `'Q'`) and value `10` to Port 2 (ID `'J'`).
 
 > [!NOTE]
 > **SPI Mode Management for Settings**: To avoid synchronization conflicts with HID commands (which restore the bus to Mode 0 for SD Card compatibility), writing individual settings in the LCD menu uses the `fpga_send_config(id, val)` function. It temporarily switches SPI0 to **Mode 1** and restores it to **Mode 0** immediately after transmission.

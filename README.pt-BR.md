@@ -66,6 +66,7 @@ uint8_t cmd[4] = {
 *   **Swap Joysticks (`'&'`)** (Index 8): `0` (Normal), `1` (Trocar portas P1/P2)
 *   **Padrão Vídeo (`'E'`)** (Index 9): `0` (AUTO - reiniciado a cada novo jogo), `1` (PAL), `2` (NTSC)
 *   **VBlank (`'M'`)** (Index 10): `0` (Não), `1` (Sim)
+*   **Controles** (Index 11): `0` (JOY), `1` (PAD). Selecionar `JOY` envia o valor `4` para a Porta 1 (ID `'Q'`) e o valor `5` para a Porta 2 (ID `'J'`). Selecionar `PAD` envia o valor `9` para a Porta 1 (ID `'Q'`) e o valor `10` para a Porta 2 (ID `'J'`).
 
 > [!NOTE]
 > **Gerenciamento de Modo SPI para Configurações**: Para evitar conflitos de sincronismo com comandos HID (que restauram o barramento em Mode 0 para compatibilidade do SD Card), a escrita de configurações individuais no menu do LCD utiliza a função `fpga_send_config(id, val)`. Ela chaveia o SPI0 temporariamente para o **Modo 1** e restaura para o **Modo 0** imediatamente após a transmissão.
