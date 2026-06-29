@@ -12,7 +12,7 @@ module mcu_spi (
   input        spi_io_ss,
   input        spi_io_clk,
   input        spi_io_din,
-  //Mod: MISO port changed from reg to wire (output) for Tri-state  (Sandro Benigno - A2600_Nano_San)
+  //Mod: MISO port changed from reg to wire (output) for Tri-state  (Sandro Benigno)
   output       spi_io_dout,
 
   // byte interface to the various core components
@@ -117,11 +117,11 @@ wire [7:0] in_byte =
 	   (spi_target == 8'd3)?mcu_sdc_din:
 	   8'h00;   
    
-//Mod: Tri-state logic configuration for MISO pin sharing  (Sandro Benigno - A2600_Nano_San)
+//Mod: Tri-state logic configuration for MISO pin sharing  (Sandro Benigno)
 reg spi_io_dout_reg;
 assign spi_io_dout = spi_io_ss ? 1'bz : spi_io_dout_reg;
 
-//Mod: SPI clock edge logic writing to internal register  (Sandro Benigno - A2600_Nano_San)
+//Mod: SPI clock edge logic writing to internal register  (Sandro Benigno)
 // setup data on rising edge of spi clock
 always @(posedge spi_io_clk or posedge spi_io_ss) begin
     if(spi_io_ss) begin

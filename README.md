@@ -202,7 +202,9 @@ This direct SPI injection architecture (`Target 3, CMD 8`) establishes the found
 * `src/db.c`: Local binary ROM database reading on the SD Card.
 * `no-OS-FatFS-SD-SDIO-SPI-RPi-Pico/`: Integrated third-party library to read files from the SD Card.
 * `resources/FPGA_adds_mods/ADD/spi_loader_san.v`: Custom Verilog module added to the FPGA to decode SPI loading commands and interface with the RAM (ioctl).
+* `resources/FPGA_adds_mods/ADD/db9_to_spi_san.v`: SPI Master module for DB9-to-SPI gamepad adapter on Tang Nano 20k.
 * `resources/FPGA_adds_mods/MOD/mcu_spi.v`: Modified SPI deserializer module on the FPGA with Tri-state output on the MISO line.
+* `resources/FPGA_adds_mods/MOD/a2600_top_tn20k_san.vhd`: Main VHDL top module of the A2600Nano core modified to integrate the SPI loader and custom peripherals.
 
 ---
 
