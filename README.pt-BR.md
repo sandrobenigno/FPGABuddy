@@ -148,6 +148,8 @@ stateDiagram-v2
 ### Detalhes dos Estados e Ajustes Finos:
 * **`STATE_SELECIONANDO`**:
   * O LCD renderiza um grid de letras para busca alfabética de ROMs e, em seguida, a lista de jogos da letra selecionada. Concorrentemente, a interface é desenhada no **OSD gráfico da FPGA** (centralizada verticalmente com 2px de espaçamento entre as linhas).
+  * **Filtro de Disponibilidade**: Apenas as letras que possuem pelo menos um jogo fisicamente presente no cartão SD (campo `sd == 1` no banco de dados) ficam ativas na grade. A listagem de jogos também exibe apenas os títulos presentes no cartão SD, otimizando o uso de RAM do RP2040.
+  * **Menu de Banco de Dados**: Pressionar o encoder por 1s (clique longo) enquanto estiver no grid de letras abre o menu de gerenciamento do banco de dados (subestado `SUBSTATE_DB_MENU`), oferecendo as opções **Atualizar Jogos** (faz o scan físico no SD, atualiza o campo `sd` de cada registro no arquivo `/roms.bin` e exibe o progresso em tempo real) e **Voltar**.
   * O cursor do menu preserva a posição do último jogo carregado ao retornar.
   * O LED RGB onboard fica na cor **Verde** (`0, 127, 0`) para sinalizar este estado.
 * **`STATE_JOGANDO`**:

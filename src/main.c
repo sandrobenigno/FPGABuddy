@@ -30,7 +30,8 @@ typedef enum {
 // Sub-estados para a tela de seleção
 typedef enum {
     SUBSTATE_LETTER_GRID,
-    SUBSTATE_GAME_LIST
+    SUBSTATE_GAME_LIST,
+    SUBSTATE_DB_MENU
 } SelectionSubState;
 
 // Estado lógico global (refatorado como estáticos globais para modularização)
@@ -62,6 +63,14 @@ static void safe_free_game_list(void) {
         game_list = NULL;
     }
     game_count = 0;
+}
+
+static int db_menu_focus = 0;
+
+static void db_scan_progress_callback(int current, int total) {
+    char line[21];
+    snprintf(line, sizeof(line), "Progresso: %d/%d", current, total);
+    ui_draw_message(" ATUALIZANDO BANCO  ", "====================", line, "Aguarde...          ");
 }
 
 static void handle_state_selecionando(uint32_t now) {
@@ -120,6 +129,13 @@ static void handle_state_selecionando(uint32_t now) {
                     ui_draw_message(title, "====================", "Sem jogos cadastrad.", "Segure 1s p/ voltar ");
                 }
             }
+        }
+        
+        if (btn_event == BUTTON_LONG_PRESS) {
+            printf("[SISTEMA] Clique longo no grid! Entrando no Menu do Banco de Dados...\n");
+            sel_substate = SUBSTATE_DB_MENU;
+            db_menu_focus = 0;
+            ui_draw_message("** GERENCIAR BANCO **", "====================", "> Atualizar Jogos   ", "  Voltar            ");
         }
     } 
     else if (sel_substate == SUBSTATE_GAME_LIST) {
@@ -183,6 +199,48 @@ static void handle_state_selecionando(uint32_t now) {
             printf("[SISTEMA] Clique longo detectado na lista! Voltando para o Grid de Letras...\n");
             sel_substate = SUBSTATE_LETTER_GRID;
             
+            ui_draw_message(" SELECIONE A LETRA  ", NULL, NULL, NULL);
+            ui_draw_letters_grid_full(category_idx);
+        }
+    }
+    else if (sel_substate == SUBSTATE_DB_MENU) {
+        if (rot != 0) {
+            db_menu_focus += rot;
+            if (db_menu_focus < 0) db_menu_focus = 1;
+            if (db_menu_focus > 1) db_menu_focus = 0;
+            
+            if (db_menu_focus == 0) {
+                ui_draw_message("** GERENCIAR BANCO **", "====================", "> Atualizar Jogos   ", "  Voltar            ");
+            } else {
+                ui_draw_message("** GERENCIAR BANCO **", "====================", "  Atualizar Jogos   ", "> Voltar            ");
+            }
+        }
+        
+        if (btn_event == BUTTON_CLICK) {
+            if (db_menu_focus == 0) {
+                printf("[SISTEMA] Iniciando atualizacao de presenca no SD...\n");
+                ui_draw_message(" ATUALIZANDO BANCO  ", "====================", "Iniciando scan...   ", "Aguarde...          ");
+                
+                db_update_sd_presence(db_scan_progress_callback);
+                
+                ui_draw_message(" BANCO ATUALIZADO   ", "====================", "Sucesso!            ", "                    ");
+                sleep_ms(1500);
+                
+                // Retorna ao grid de letras
+                sel_substate = SUBSTATE_LETTER_GRID;
+                ui_draw_message(" SELECIONE A LETRA  ", NULL, NULL, NULL);
+                ui_draw_letters_grid_full(category_idx);
+            } else {
+                // Voltar
+                sel_substate = SUBSTATE_LETTER_GRID;
+                ui_draw_message(" SELECIONE A LETRA  ", NULL, NULL, NULL);
+                ui_draw_letters_grid_full(category_idx);
+            }
+        }
+        
+        if (btn_event == BUTTON_LONG_PRESS) {
+            // Retorna ao grid de letras
+            sel_substate = SUBSTATE_LETTER_GRID;
             ui_draw_message(" SELECIONE A LETRA  ", NULL, NULL, NULL);
             ui_draw_letters_grid_full(category_idx);
         }

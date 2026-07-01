@@ -29,7 +29,8 @@ typedef struct {
     uint32_t tamanho;    // Tamanho do arquivo ROM em bytes
     char bank_model[16]; // Modelo de banking (16 caracteres)
     char letra;          // Letra para busca indexada rápida
-    char padding[11];    // Alinhamento para atingir exatamente 128 bytes
+    uint8_t sd;          // Campo de status de presenca no SD (1 = no SD, 0 = ausente, 2 = ocultado)
+    char padding[10];    // Alinhamento para atingir exatamente 128 bytes
 } DbRecord;
 
 static const char* OFFICIAL_DB_FILE_PATH = "/roms.bin";
@@ -96,7 +97,8 @@ bool db_init(void) {
                     4096,
                     "Standard 4KB",
                     'A',
-                    {0}
+                    1, // sd
+                    {0} // padding
                 },
                 {
                     "37f2ff841bc4d7a8d8e578c93de821b0",
@@ -104,7 +106,8 @@ bool db_init(void) {
                     8192,
                     "F8 (8KB)",
                     'A',
-                    {0}
+                    1, // sd
+                    {0} // padding
                 },
                 {
                     "89a19c5b293883a681c2f90abef382b9",
@@ -112,7 +115,8 @@ bool db_init(void) {
                     2048,
                     "Standard 2KB",
                     'B',
-                    {0}
+                    1, // sd
+                    {0} // padding
                 },
                 {
                     "59a39d8b742cb3a90184bfaef382c49b",
@@ -120,7 +124,8 @@ bool db_init(void) {
                     2048,
                     "Standard 2KB",
                     'C',
-                    {0}
+                    1, // sd
+                    {0} // padding
                 }
             };
             
@@ -164,16 +169,35 @@ bool db_get_available_letters(bool letras_disponiveis[27]) {
     memset(letras_disponiveis, 0, 27 * sizeof(bool));
     if (!db_initialized) return false;
     
-    // 1. Marca as letras que têm jogos na base oficial de forma O(1) pelo Header
-    for (int i = 0; i < 27; i++) {
-        if (db_header.index[i].count > 0) {
-            letras_disponiveis[i] = true;
+    // 1. Marca as letras que têm pelo menos um jogo no SD (sd == 1) na base oficial
+    FIL file;
+    FRESULT fr = f_open(&file, OFFICIAL_DB_FILE_PATH, FA_READ);
+    if (fr == FR_OK) {
+        for (int i = 0; i < 27; i++) {
+            uint32_t start = db_header.index[i].start;
+            uint32_t count = db_header.index[i].count;
+            if (count > 0) {
+                uint32_t offset = sizeof(DbHeader) + (start * sizeof(DbRecord));
+                f_lseek(&file, offset);
+                for (uint32_t j = 0; j < count; j++) {
+                    DbRecord rec;
+                    UINT br;
+                    if (f_read(&file, &rec, sizeof(DbRecord), &br) == FR_OK && br == sizeof(DbRecord)) {
+                        if (rec.sd == 1) {
+                            letras_disponiveis[i] = true;
+                            break; // Encontrou pelo menos um jogo presente, passa para a proxima letra
+                        }
+                    } else {
+                        break;
+                    }
+                }
+            }
         }
+        f_close(&file);
     }
     
     // 2. Marca as letras que têm jogos na base dinâmica do usuário
-    FIL file;
-    FRESULT fr = f_open(&file, USER_DB_FILE_PATH, FA_READ);
+    fr = f_open(&file, USER_DB_FILE_PATH, FA_READ);
     if (fr == FR_OK) {
         DbRecord rec;
         UINT br;
@@ -242,16 +266,18 @@ bool db_fetch_games_by_letter(char letra, GameInfo** list, int* count) {
         f_close(&file);
     }
     
-    uint32_t total_count = official_count + user_matching_count;
-    if (total_count == 0) return true; // Sem jogos nesta categoria
+    uint32_t max_total_count = official_count + user_matching_count;
+    if (max_total_count == 0) return true; // Sem jogos nesta categoria
     
-    // 3. Aloca memória exata na heap para receber a lista fundida (zero-inicializada)
-    *list = (GameInfo*)calloc(total_count, sizeof(GameInfo));
+    // 3. Aloca memória na heap para receber o máximo de registros da categoria
+    *list = (GameInfo*)calloc(max_total_count, sizeof(GameInfo));
     if (!*list) {
         return false; // Heap Exhaustion
     }
     
-    // 4. Carrega os registros oficiais diretamente via offset O(1) de busca rápida
+    uint32_t loaded_count = 0;
+    
+    // 4. Carrega os registros oficiais que possuem sd == 1
     if (official_count > 0) {
         FIL official_file;
         fr = f_open(&official_file, OFFICIAL_DB_FILE_PATH, FA_READ);
@@ -264,22 +290,23 @@ bool db_fetch_games_by_letter(char letra, GameInfo** list, int* count) {
                 UINT br;
                 FRESULT read_fr = f_read(&official_file, &official_rec, sizeof(DbRecord), &br);
                 if (read_fr == FR_OK && br == sizeof(DbRecord)) {
-                    memcpy((*list)[i].md5, official_rec.md5, 32);
-                    (*list)[i].md5[32] = '\0';
-                    
-                    memcpy((*list)[i].nome, official_rec.nome, 63);
-                    (*list)[i].nome[63] = '\0';
-                    
-                    (*list)[i].tamanho = official_rec.tamanho;
-                    
-                    memcpy((*list)[i].bank_model, official_rec.bank_model, 16);
-                    (*list)[i].bank_model[16] = '\0';
+                    // Carrega apenas se o jogo estiver disponível no SD
+                    if (official_rec.sd == 1) {
+                        memcpy((*list)[loaded_count].md5, official_rec.md5, 32);
+                        (*list)[loaded_count].md5[32] = '\0';
+                        
+                        memcpy((*list)[loaded_count].nome, official_rec.nome, 63);
+                        (*list)[loaded_count].nome[63] = '\0';
+                        
+                        (*list)[loaded_count].tamanho = official_rec.tamanho;
+                        
+                        memcpy((*list)[loaded_count].bank_model, official_rec.bank_model, 16);
+                        (*list)[loaded_count].bank_model[16] = '\0';
+                        
+                        loaded_count++;
+                    }
                 } else {
                     printf("[DB] ERRO: Falha ao ler registro oficial %d (FRESULT: %d, lidos: %d)\n", i, read_fr, br);
-                    strcpy((*list)[i].nome, "Erro de Leitura SD");
-                    memset((*list)[i].md5, 0, sizeof((*list)[i].md5));
-                    (*list)[i].tamanho = 0;
-                    strcpy((*list)[i].bank_model, "UNKNOWN");
                 }
             }
             f_close(&official_file);
@@ -289,7 +316,7 @@ bool db_fetch_games_by_letter(char letra, GameInfo** list, int* count) {
     // 5. Preenche os registros provenientes da base do usuário
     uint32_t user_loaded_limit = user_matching_count > 64 ? 64 : user_matching_count;
     for (uint32_t i = 0; i < user_loaded_limit; i++) {
-        uint32_t list_idx = official_count + i;
+        uint32_t list_idx = loaded_count;
         
         memcpy((*list)[list_idx].md5, user_temp_records[i].md5, 32);
         (*list)[list_idx].md5[32] = '\0';
@@ -301,17 +328,21 @@ bool db_fetch_games_by_letter(char letra, GameInfo** list, int* count) {
         
         memcpy((*list)[list_idx].bank_model, user_temp_records[i].bank_model, 16);
         (*list)[list_idx].bank_model[16] = '\0';
+        
+        loaded_count++;
     }
     
-    // Se o estouro de usuários exceder o limite seguro de 64, atualiza o total count real carregado
-    if (user_matching_count > 64) {
-        total_count = official_count + 64;
+    if (loaded_count == 0) {
+        free(*list);
+        *list = NULL;
+        *count = 0;
+        return true;
     }
     
-    // 6. Roda um qsort na RAM ultra veloz para ordenar alfabeticamente os registros combinados
-    qsort(*list, total_count, sizeof(GameInfo), game_name_compare);
+    // 6. Roda um qsort na RAM ultra veloz para ordenar alfabeticamente os registros carregados
+    qsort(*list, loaded_count, sizeof(GameInfo), game_name_compare);
     
-    *count = total_count;
+    *count = loaded_count;
     return true;
 }
 
@@ -396,6 +427,7 @@ bool db_register_user_game(const char* md5, uint32_t size, const char* bank_mode
     }
     
     rec.letra = 'J'; // Agrupa dinamicamente sob o 'J' inicialmente
+    rec.sd = 1;      // Jogo de usuário sempre considerado disponível
     
     // 5. Escreve no cartão SD
     UINT bw;
@@ -413,5 +445,69 @@ bool db_register_user_game(const char* md5, uint32_t size, const char* bank_mode
 
 void db_close(void) {
     db_initialized = false;
+}
+
+bool db_update_sd_presence(void (*progress_cb)(int current, int total)) {
+    if (!db_initialized) return false;
+    
+    FIL file;
+    FRESULT fr = f_open(&file, OFFICIAL_DB_FILE_PATH, FA_READ | FA_WRITE);
+    if (fr != FR_OK) {
+        printf("[DB] Falha ao abrir banco oficial para atualizacao (erro: %d)\n", fr);
+        return false;
+    }
+    
+    // Calcula o total de registros somando as contagens do índice
+    uint32_t total_records = 0;
+    for (int i = 0; i < 27; i++) {
+        total_records += db_header.index[i].count;
+    }
+    
+    if (total_records == 0) {
+        f_close(&file);
+        return true;
+    }
+    
+    // Varre e atualiza registro por registro
+    for (uint32_t i = 0; i < total_records; i++) {
+        uint32_t offset = sizeof(DbHeader) + (i * sizeof(DbRecord));
+        f_lseek(&file, offset);
+        
+        DbRecord rec;
+        UINT br;
+        fr = f_read(&file, &rec, sizeof(DbRecord), &br);
+        if (fr != FR_OK || br != sizeof(DbRecord)) {
+            printf("[DB] Erro ao ler registro %d no offset %d\n", i, offset);
+            break;
+        }
+        
+        // Monta o caminho /roms/<MD5>.bin
+        char path_buf[64];
+        char md5_str[33];
+        memcpy(md5_str, rec.md5, 32);
+        md5_str[32] = '\0';
+        snprintf(path_buf, sizeof(path_buf), "/roms/%s.bin", md5_str);
+        
+        // Verifica existencia do arquivo
+        FILINFO fno;
+        FRESULT stat_fr = f_stat(path_buf, &fno);
+        uint8_t current_presence = (stat_fr == FR_OK) ? 1 : 0;
+        
+        // Se mudou, atualiza e escreve de volta no mesmo offset
+        if (rec.sd != current_presence) {
+            rec.sd = current_presence;
+            f_lseek(&file, offset);
+            UINT bw;
+            f_write(&file, &rec, sizeof(DbRecord), &bw);
+        }
+        
+        // Chama callback de progresso periodicamente ou ao final
+        if (progress_cb && (i % 10 == 0 || i == total_records - 1)) {
+            progress_cb(i + 1, total_records);
+        }
+    }
+    
+    f_close(&file);
+    return true;
 }
 

@@ -58,6 +58,13 @@ bool db_check_game_exists(const char* md5);
 bool db_register_user_game(const char* md5, uint32_t size, const char* bank_model);
 
 /**
+ * @brief Varre o cartao SD e atualiza o status de presenca (campo sd) de todos os jogos.
+ * @param progress_cb Callback opcional para relatar o progresso (atual, total).
+ * @return true se atualizado com sucesso.
+ */
+bool db_update_sd_presence(void (*progress_cb)(int current, int total));
+
+/**
  * @brief Fecha a conexão com o banco de dados.
  */
 void db_close(void);
