@@ -139,10 +139,19 @@ The firmware life cycle is controlled by the following state machine:
 ```mermaid
 stateDiagram-v2
     [*] --> STATE_SELECIONANDO : Boot
+    
+    state STATE_SELECIONANDO {
+        [*] --> SUBSTATE_LETTER_GRID
+        SUBSTATE_LETTER_GRID --> SUBSTATE_GAME_LIST : Click on Grid
+        SUBSTATE_GAME_LIST --> SUBSTATE_LETTER_GRID : Long Click (1s)
+        SUBSTATE_LETTER_GRID --> SUBSTATE_DB_MENU : Long Click (1s)
+        SUBSTATE_DB_MENU --> SUBSTATE_LETTER_GRID : Long Click / Back
+    }
+
     STATE_SELECIONANDO --> STATE_JOGANDO : ROM Injection (Success)
     STATE_JOGANDO --> STATE_CONFIGURANDO : Quick Encoder Click
     STATE_CONFIGURANDO --> STATE_JOGANDO : "Voltar ao Jogo" or Long Click (1s)
-    STATE_JOGANDO --> STATE_SELECIONANDO : Long Encoder Click (>1s)
+    STATE_JOGANDO --> STATE_SELECIONANDO : Long Click (>1s)
 ```
 
 ### Details of the States and Fine-Tuning:
