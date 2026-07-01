@@ -304,21 +304,6 @@ void fpga_send_key(uint8_t keycode, bool pressed) {
     spi_set_format(spi0, 8, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
 }
 
-void fpga_send_mouse(uint8_t buttons, int8_t dx, int8_t dy) {
-    claim_spi_bus();
-    
-    uint8_t cmd[5] = {
-        0x01, // Target 1 (HID)
-        0x02, // Cmd 2 (SPI_HID_MOUSE)
-        buttons,
-        (uint8_t)dx,
-        (uint8_t)dy
-    };
-    fpga_spi_transaction(cmd, 5, NULL, 0);
-    
-    // Restaura o formato SPI para o modo esperado pelo cartão SD (SPI Mode 0)
-    spi_set_format(spi0, 8, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
-}
 
 void fpga_osd_set_visible(bool visible) {
     claim_spi_bus();

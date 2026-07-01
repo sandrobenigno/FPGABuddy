@@ -92,17 +92,7 @@ uint8_t cmd[4] = {
         usb_kbd // Keyboard byte: bit 7 = 0 for Press, 1 for Release; bits 6-0 = USB HID Scan Code (e.g. F1 = 0x3a)
     };
     ```
-*   **Mouse Events (HID Target, CMD 2)**:
-    Sends **5-byte** packets containing button clicks and relative movement:
-    ```c
-    uint8_t cmd[5] = {
-        0x01, // Target 1 (HID)
-        0x02, // CMD 2 (SPI_HID_MOUSE)
-        buttons, // Buttons byte: bit 0 = Left Click, bit 1 = Right Click (1 = pressed, 0 = released)
-        dx,      // Relative X movement (int8_t)
-        dy       // Relative Y movement (int8_t)
-    };
-    ```
+
 
 ### Target OSD (2) Commands
 *   **Display Control (OSD Target, CMD 1)**:
