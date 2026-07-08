@@ -2,13 +2,14 @@
 
 🇺🇸 [English](README.md) | 🇧🇷 Português
 
-<img width="681" height="800" src="img/FPGABuddy.jpeg" />
+<img width="681" height="800" src="img/FPGABuddy2.jpg" />
 
 ## 1. Visão Geral do Sistema
 O **FPGABuddy** é um firmware para o microcontrolador **Raspberry Pi Pico (RP2040)** que atua como companion (coprocessador) para um core de **Atari 2600** executado em uma FPGA **Tang Nano 20k**. 
 * O RP2040 gerencia o cartão SD (FAT32), processa um banco de dados de ROMs local (`src/db.c`), renderiza a interface em um display LCD 20x4 I2C (`src/lcd_20x4.c`) e, concorrentemente nos estados de seleção e configuração, no **OSD (On-Screen Display) gráfico interno da FPGA** ($128 \times 64$ pixels, 1 bit, via Target SPI `0x02`), além de fazer a injeção física das ROMs diretamente na memória da FPGA via barramento SPI0.
 * Ele também oferece um **Menu de Configurações Rápidas** durante a gameplay para alterar parâmetros da FPGA em tempo real.
 
+### Este projeto está relacionado ao meu core de Atari 2600: [A2600NanoSAN](http://github.com/sandrobenigno/A2600NanoSAN)
 ---
 
 ## 2. Pinagem Completa (RP2040)
