@@ -9,7 +9,7 @@
 * The RP2040 manages the SD card (FAT32), processes a local ROM database (`src/db.c`), renders the interface on an I2C 20x4 LCD display (`src/lcd_20x4.c`) and concurrently, in the selection and configuration states, on the **graphical on-screen-display (OSD) module inside the FPGA** ($128 \times 64$ pixels, 1-bit, via Target SPI `0x02`), and physically injects ROMs directly into the FPGA memory via the SPI0 bus.
 * It also offers a **Quick Settings Menu** during gameplay to change FPGA parameters in real time.
 
-### This project is related to my Atari 2600 core [A2600NanoSAN](http://github.com/sandrobenigno/A2600NanoSAN)
+### This project is related to my Atari 2600 core: [A2600NanoSAN](http://github.com/sandrobenigno/A2600NanoSAN)
 ---
 
 ## 2. Complete Pinout (RP2040)
