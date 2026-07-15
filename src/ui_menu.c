@@ -29,6 +29,7 @@ static const char *CONTROLS_LABELS[] = {"JOY", "PAD"};
 static MenuOption menu_options[MENU_MAX_ITEMS] = {
     {"Voltar ao Jogo", '\0', 0, 0, NULL},
     {"Reiniciar", '\0', 0, 0, NULL},
+    {"Controles", '\0', 0, 1, CONTROLS_LABELS},
     {"Scanlines", 'S', 2, 3, SCANLINES_LABELS},
     {"De-comb", 'C', 0, 1, SWAP_LABELS},
     {"Volume", 'A', 2, 3, VOLUME_LABELS},
@@ -37,8 +38,7 @@ static MenuOption menu_options[MENU_MAX_ITEMS] = {
     {"Ajuste Tela", 'W', 1, 1, ASPECT_LABELS},
     {"Swap Joysticks", '&', 0, 1, SWAP_LABELS},
     {"Padrao Video", 'E', 0, 2, VIDEO_LABELS},
-    {"VBlank", 'M', 0, 1, SWAP_LABELS},
-    {"Controles", '\0', 0, 1, CONTROLS_LABELS}
+    {"VBlank", 'M', 0, 1, SWAP_LABELS}
 };
 
 // Funções utilitárias do LCD virtual

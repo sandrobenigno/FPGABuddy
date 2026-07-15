@@ -58,16 +58,16 @@ uint8_t cmd[4] = {
 #### Estrutura do Menu de Configurações Rápidas (`menu_options`):
 *   **Voltar ao Jogo** (Index 0): Ação de clique único. Retorna o sistema ao estado de jogo (`STATE_JOGANDO`) sem alterar a FPGA.
 *   **Reiniciar (Game Reset)** (Index 1): Ação de clique único. Simula a chave física de Game Reset do console Atari transmitindo os eventos de pressionar e soltar a tecla de teclado **F2** (`0x3B`), retornando o sistema imediatamente ao estado de jogo.
-*   **Scanlines (`'S'`)** (Index 2): `0` (Desligado), `1` (25%), `2` (50%), `3` (75%)
-*   **De-comb (`'C'`)** (Index 3): `0` (Não), `1` (Sim)
-*   **Volume (`'A'`)** (Index 4): `0` (Mudo), `1` (33%), `2` (66%), `3` (100%)
-*   **Dificuldade P1 (`'X'`)** (Index 5): `0` (B - Fácil), `1` (A - Difícil)
-*   **Dificuldade P2 (`'Y'`)** (Index 6): `0` (B - Fácil), `1` (A - Difícil)
-*   **Ajuste Tela (`'W'`)** (Index 7): `0` (Normal 4:3), `1` (Wide 16:9) (Mapeado como "Ajuste Tela" no LCD)
-*   **Swap Joysticks (`'&'`)** (Index 8): `0` (Normal), `1` (Trocar portas P1/P2)
-*   **Padrão Vídeo (`'E'`)** (Index 9): `0` (AUTO - reiniciado a cada novo jogo), `1` (PAL), `2` (NTSC)
-*   **VBlank (`'M'`)** (Index 10): `0` (Não), `1` (Sim)
-*   **Controles** (Index 11): `0` (JOY), `1` (PAD). Selecionar `JOY` envia o valor `4` para a Porta 1 (ID `'Q'`) e o valor `5` para a Porta 2 (ID `'J'`). Selecionar `PAD` envia o valor `9` para a Porta 1 (ID `'Q'`) e o valor `10` para a Porta 2 (ID `'J'`).
+*   **Controles** (Index 2): `0` (JOY), `1` (PAD). Selecionar `JOY` envia o valor `4` para a Porta 1 (ID `'Q'`) e o valor `5` para a Porta 2 (ID `'J'`). Selecionar `PAD` envia o valor `9` para a Porta 1 (ID `'Q'`) e o valor `10` para a Porta 2 (ID `'J'`).
+*   **Scanlines (`'S'`)** (Index 3): `0` (Desligado), `1` (25%), `2` (50%), `3` (75%)
+*   **De-comb (`'C'`)** (Index 4): `0` (Não), `1` (Sim)
+*   **Volume (`'A'`)** (Index 5): `0` (Mudo), `1` (33%), `2` (66%), `3` (100%)
+*   **Dificuldade P1 (`'X'`)** (Index 6): `0` (B - Fácil), `1` (A - Difícil)
+*   **Dificuldade P2 (`'Y'`)** (Index 7): `0` (B - Fácil), `1` (A - Difícil)
+*   **Ajuste Tela (`'W'`)** (Index 8): `0` (Normal 4:3), `1` (Wide 16:9) (Mapeado como "Ajuste Tela" no LCD)
+*   **Swap Joysticks (`'&'`)** (Index 9): `0` (Normal), `1` (Trocar portas P1/P2)
+*   **Padrão Vídeo (`'E'`)** (Index 10): `0` (AUTO - reiniciado a cada novo jogo), `1` (PAL), `2` (NTSC)
+*   **VBlank (`'M'`)** (Index 11): `0` (Não), `1` (Sim)
 
 > [!NOTE]
 > **Gerenciamento de Modo SPI para Configurações**: Para evitar conflitos de sincronismo com comandos HID (que restauram o barramento em Mode 0 para compatibilidade do SD Card), a escrita de configurações individuais no menu do LCD utiliza a função `fpga_send_config(id, val)`. Ela chaveia o SPI0 temporariamente para o **Modo 1** e restaura para o **Modo 0** imediatamente após a transmissão.
