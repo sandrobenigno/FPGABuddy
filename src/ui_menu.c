@@ -272,14 +272,42 @@ void ui_draw_message(const char* l0, const char* l1, const char* l2, const char*
 }
 
 void ui_write_game_line(const char* game_name) {
-    char line[21];
-    snprintf(line, sizeof(line), "%s", game_name);
+    char line1[21];
+    char line2[21];
+    
+    int len = strlen(game_name);
+    if (len <= 20) {
+        snprintf(line1, sizeof(line1), "%s", game_name);
+        snprintf(line2, sizeof(line2), "Gire: Nav | Clique: OK");
+    } else {
+        // Encontra o último caractere de espaço dentro dos primeiros 20 caracteres
+        int split_idx = 20;
+        for (int i = 20; i >= 0; i--) {
+            if (game_name[i] == ' ') {
+                split_idx = i;
+                break;
+            }
+        }
+        
+        // Copia a primeira parte
+        strncpy(line1, game_name, split_idx);
+        line1[split_idx] = '\0';
+        
+        // Pula o espaço se houver
+        int start2 = (game_name[split_idx] == ' ') ? split_idx + 1 : split_idx;
+        
+        // Copia a segunda parte (limita a 20 caracteres)
+        strncpy(line2, game_name + start2, 20);
+        line2[20] = '\0';
+    }
     
     if (lcd_ok) {
-        lcd_write_line(2, line);
+        lcd_write_line(2, line1);
+        lcd_write_line(3, line2);
     }
     
     // Atualiza buffer virtual (OSD)
-    virtual_lcd_write_line(2, line);
+    virtual_lcd_write_line(2, line1);
+    virtual_lcd_write_line(3, line2);
     virtual_lcd_flush();
 }

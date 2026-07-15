@@ -122,9 +122,8 @@ static void handle_state_selecionando(uint32_t now) {
                 snprintf(title, sizeof(title), "-> LETRA %c (%d)", current_letter, game_count);
                 
                 if (game_count > 0) {
-                    char line[21];
-                    snprintf(line, sizeof(line), "%s", game_list[selected_idx].nome);
-                    ui_draw_message(title, "====================", line, "Gire: Nav | Clique: OK");
+                    ui_draw_message(title, "====================", NULL, NULL);
+                    ui_write_game_line(game_list[selected_idx].nome);
                 } else {
                     ui_draw_message(title, "====================", "Sem jogos cadastrad.", "Segure 1s p/ voltar ");
                 }
@@ -184,9 +183,8 @@ static void handle_state_selecionando(uint32_t now) {
                     char title[21];
                     snprintf(title, sizeof(title), "-> LETRA %c (%d)", CATEGORIES[category_idx], game_count);
                     if (game_count > 0) {
-                        char line[21];
-                        snprintf(line, sizeof(line), "%s", game_list[selected_idx].nome);
-                        ui_draw_message(title, "====================", line, "Gire: Nav | Clique: OK");
+                        ui_draw_message(title, "====================", NULL, NULL);
+                        ui_write_game_line(game_list[selected_idx].nome);
                     } else {
                         ui_draw_message(title, "====================", "Sem jogos cadastrad.", "Segure 1s p/ voltar ");
                     }
@@ -286,9 +284,8 @@ static void return_to_rom_menu(void) {
         char title[21];
         snprintf(title, sizeof(title), "-> LETRA %c (%d)", current_letter, game_count);
         if (game_count > 0) {
-            char line[21];
-            snprintf(line, sizeof(line), "%s", game_list[selected_idx].nome);
-            ui_draw_message(title, "====================", line, "Gire: Nav | Clique: OK");
+            ui_draw_message(title, "====================", NULL, NULL);
+            ui_write_game_line(game_list[selected_idx].nome);
         } else {
             ui_draw_message(title, "====================", "Sem jogos cadastrad.", "Segure 1s p/ voltar ");
         }
