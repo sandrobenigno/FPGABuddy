@@ -2,6 +2,7 @@
 #include "lcd_20x4.h"
 #include "font_5x8.h"
 #include "fpga_ctrl.h"
+#include "translation.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -18,29 +19,29 @@ const char CATEGORIES[27] = {
     'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '#'
 };
 
-static const char *SCANLINES_LABELS[] = {"Desl.", "25%", "50%", "75%"};
-static const char *VOLUME_LABELS[] = {"Mudo", "33%", "66%", "100%"};
-static const char *DIFFICULTY_LABELS[] = {"B (Facil)", "A (Dificil)"};
-static const char *ASPECT_LABELS[] = {"4:3", "16:9"};
-static const char *SWAP_LABELS[] = {"Nao", "Sim"};
-static const char *VIDEO_LABELS[] = {"AUTO", "PAL", "NTSC"};
-static const char *CONTROLS_LABELS[] = {"JOY", "PAD"};
-static const char *VSYNC_STAB_LABELS[] = {"Smart", "Fixed", "None"};
+static const char *SCANLINES_LABELS[4];
+static const char *VOLUME_LABELS[4];
+static const char *DIFFICULTY_LABELS[2];
+static const char *ASPECT_LABELS[2];
+static const char *SWAP_LABELS[2];
+static const char *VIDEO_LABELS[3];
+static const char *CONTROLS_LABELS[2];
+static const char *VSYNC_STAB_LABELS[3];
 
 static MenuOption menu_options[MENU_MAX_ITEMS] = {
-    {"Voltar ao Jogo", '\0', 0, 0, NULL},
-    {"Reiniciar", '\0', 0, 0, NULL},
-    {"Controles", '\0', 0, 1, CONTROLS_LABELS},
-    {"Scanlines", 'S', 2, 3, SCANLINES_LABELS},
-    {"De-comb", 'C', 0, 1, SWAP_LABELS},
-    {"Volume", 'A', 2, 3, VOLUME_LABELS},
-    {"Dificuldade P1", 'X', 0, 1, DIFFICULTY_LABELS},
-    {"Dificuldade P2", 'Y', 0, 1, DIFFICULTY_LABELS},
-    {"Ajuste Tela", 'W', 1, 1, ASPECT_LABELS},
-    {"Swap Joysticks", '&', 0, 1, SWAP_LABELS},
-    {"Padrao Video", 'E', 0, 2, VIDEO_LABELS},
-    {"VBlank", 'M', 0, 1, SWAP_LABELS},
-    {"VSync Stab", 'T', 0, 2, VSYNC_STAB_LABELS}
+    {NULL, '\0', 0, 0, NULL},
+    {NULL, '\0', 0, 0, NULL},
+    {NULL, '\0', 0, 1, CONTROLS_LABELS},
+    {NULL, 'S', 2, 3, SCANLINES_LABELS},
+    {NULL, 'C', 0, 1, SWAP_LABELS},
+    {NULL, 'A', 2, 3, VOLUME_LABELS},
+    {NULL, 'X', 0, 1, DIFFICULTY_LABELS},
+    {NULL, 'Y', 0, 1, DIFFICULTY_LABELS},
+    {NULL, 'W', 1, 1, ASPECT_LABELS},
+    {NULL, '&', 0, 1, SWAP_LABELS},
+    {NULL, 'E', 0, 2, VIDEO_LABELS},
+    {NULL, 'M', 0, 1, SWAP_LABELS},
+    {NULL, 'T', 0, 2, VSYNC_STAB_LABELS}
 };
 
 // Funções utilitárias do LCD virtual
@@ -144,6 +145,7 @@ static void virtual_lcd_flush(void) {
 void ui_menu_init(bool is_lcd_ok) {
     lcd_ok = is_lcd_ok;
     virtual_lcd_clear();
+    ui_menu_update_labels();
 }
 
 bool ui_is_lcd_ok(void) {
@@ -155,6 +157,52 @@ MenuOption* ui_get_menu_option(int index) {
         return &menu_options[index];
     }
     return NULL;
+}
+
+void ui_menu_update_labels(void) {
+    SCANLINES_LABELS[0] = t(MSG_OFF);
+    SCANLINES_LABELS[1] = "25%";
+    SCANLINES_LABELS[2] = "50%";
+    SCANLINES_LABELS[3] = "75%";
+    
+    VOLUME_LABELS[0] = t(MSG_MUTE);
+    VOLUME_LABELS[1] = "33%";
+    VOLUME_LABELS[2] = "66%";
+    VOLUME_LABELS[3] = "100%";
+    
+    DIFFICULTY_LABELS[0] = t(MSG_EASY);
+    DIFFICULTY_LABELS[1] = t(MSG_HARD);
+    
+    ASPECT_LABELS[0] = "4:3";
+    ASPECT_LABELS[1] = "16:9";
+    
+    SWAP_LABELS[0] = t(MSG_NO);
+    SWAP_LABELS[1] = t(MSG_YES);
+    
+    VIDEO_LABELS[0] = t(MSG_AUTO);
+    VIDEO_LABELS[1] = "PAL";
+    VIDEO_LABELS[2] = "NTSC";
+    
+    CONTROLS_LABELS[0] = "JOY";
+    CONTROLS_LABELS[1] = "PAD";
+    
+    VSYNC_STAB_LABELS[0] = t(MSG_SMART);
+    VSYNC_STAB_LABELS[1] = t(MSG_FIXED);
+    VSYNC_STAB_LABELS[2] = t(MSG_NONE);
+    
+    menu_options[0].label = t(MSG_MENU_BACK_TO_GAME);
+    menu_options[1].label = t(MSG_MENU_RESTART);
+    menu_options[2].label = t(MSG_MENU_CONTROLS);
+    menu_options[3].label = t(MSG_MENU_SCANLINES);
+    menu_options[4].label = t(MSG_MENU_DECOMB);
+    menu_options[5].label = t(MSG_MENU_VOLUME);
+    menu_options[6].label = t(MSG_MENU_DIFF_P1);
+    menu_options[7].label = t(MSG_MENU_DIFF_P2);
+    menu_options[8].label = t(MSG_MENU_ASPECT);
+    menu_options[9].label = t(MSG_MENU_SWAP_JOYS);
+    menu_options[10].label = t(MSG_MENU_VIDEO_STD);
+    menu_options[11].label = t(MSG_MENU_VBLANK);
+    menu_options[12].label = t(MSG_MENU_VSYNC_STAB);
 }
 
 void ui_draw_grid_char(int index, bool show_visible, bool is_selected) {
@@ -280,7 +328,7 @@ void ui_write_game_line(const char* game_name) {
     int len = strlen(game_name);
     if (len <= 20) {
         snprintf(line1, sizeof(line1), "%s", game_name);
-        snprintf(line2, sizeof(line2), "Gire: Nav | Clique: OK");
+        snprintf(line2, sizeof(line2), "%s", t(MSG_NAV_INSTRUCTION));
     } else {
         // Encontra o último caractere de espaço dentro dos primeiros 20 caracteres
         int split_idx = 20;

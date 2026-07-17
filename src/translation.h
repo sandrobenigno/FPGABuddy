@@ -1,0 +1,60 @@
+#pragma once
+
+typedef enum {
+    MSG_DB_MENU_TITLE,
+    MSG_DB_MENU_UPDATE,
+    MSG_DB_MENU_LANG,
+    MSG_DB_MENU_BACK,
+    MSG_READING_SD,
+    MSG_UPDATING_DB,
+    MSG_DB_SUCCESS,
+    MSG_SUCCESS,
+    MSG_WAIT,
+    MSG_INIT_SCAN,
+    MSG_CONSOLE_ACTIVE,
+    MSG_HOLD_BACK,
+    MSG_SELECT_LETTER,
+    MSG_LETTER_FORMAT,
+    MSG_NO_GAMES,
+    MSG_NAV_INSTRUCTION,
+    MSG_NO_GAMES_AVAIL,
+    MSG_HOLD_BACK_GRID,
+    MSG_LOADING_MENU,
+    MSG_QUICK_SETTINGS,
+    MSG_MENU_BACK_TO_GAME,
+    MSG_MENU_RESTART,
+    MSG_MENU_CONTROLS,
+    MSG_MENU_SCANLINES,
+    MSG_MENU_DECOMB,
+    MSG_MENU_VOLUME,
+    MSG_MENU_DIFF_P1,
+    MSG_MENU_DIFF_P2,
+    MSG_MENU_ASPECT,
+    MSG_MENU_SWAP_JOYS,
+    MSG_MENU_VIDEO_STD,
+    MSG_MENU_VBLANK,
+    MSG_MENU_VSYNC_STAB,
+    MSG_YES,
+    MSG_NO,
+    MSG_OFF,
+    MSG_AUTO,
+    MSG_MUTE,
+    MSG_EASY,
+    MSG_HARD,
+    MSG_NORMAL,
+    MSG_SWAP_LABEL,
+    MSG_SMART,
+    MSG_FIXED,
+    MSG_NONE,
+    MSG_COUNT
+} StringId;
+
+typedef enum {
+    LANG_PT_BR = 0,
+    LANG_EN,
+    LANG_COUNT
+} Language;
+
+void translation_set_language(Language lang);
+Language translation_get_language(void);
+const char* t(StringId id);

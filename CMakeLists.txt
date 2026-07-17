@@ -28,6 +28,8 @@ target_sources(fpgabuddy PRIVATE
     src/encoder.c
     src/fpga_ctrl.c
     src/ui_menu.c
+    src/translation.c
+    src/config_mgr.c
 )
 
 # Adiciona diretórios de include

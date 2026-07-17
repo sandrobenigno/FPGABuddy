@@ -11,6 +11,8 @@
 #include "fpga_ctrl.h"
 #include "ui_menu.h"
 #include "config.h"
+#include "translation.h"
+#include "config_mgr.h"
 
 // Objeto de sistema de arquivos global do FatFs
 FATFS fs;
@@ -69,8 +71,24 @@ static int db_menu_focus = 0;
 
 static void db_scan_progress_callback(int current, int total) {
     char line[21];
-    snprintf(line, sizeof(line), "Progresso: %d/%d", current, total);
-    ui_draw_message(" ATUALIZANDO BANCO  ", "====================", line, "Aguarde...          ");
+    if (translation_get_language() == LANG_EN) {
+        snprintf(line, sizeof(line), "Progress: %d/%d", current, total);
+    } else {
+        snprintf(line, sizeof(line), "Progresso: %d/%d", current, total);
+    }
+    ui_draw_message(t(MSG_UPDATING_DB), "====================", line, t(MSG_WAIT));
+}
+
+static void draw_system_menu(int focus) {
+    char l1[21];
+    char l2[21];
+    char l3[21];
+    
+    snprintf(l1, sizeof(l1), "%s%s", focus == 0 ? "> " : "  ", t(MSG_DB_MENU_UPDATE));
+    snprintf(l2, sizeof(l2), "%s%s%s", focus == 1 ? "> " : "  ", t(MSG_DB_MENU_LANG), translation_get_language() == LANG_EN ? "EN" : "PT-BR");
+    snprintf(l3, sizeof(l3), "%s%s", focus == 2 ? "> " : "  ", t(MSG_DB_MENU_BACK));
+    
+    ui_draw_message(t(MSG_DB_MENU_TITLE), l1, l2, l3);
 }
 
 static void handle_state_selecionando(uint32_t now) {
@@ -119,22 +137,22 @@ static void handle_state_selecionando(uint32_t now) {
                 sel_substate = SUBSTATE_GAME_LIST;
                 
                 char title[21];
-                snprintf(title, sizeof(title), "-> LETRA %c (%d)", current_letter, game_count);
+                snprintf(title, sizeof(title), t(MSG_LETTER_FORMAT), current_letter, game_count);
                 
                 if (game_count > 0) {
                     ui_draw_message(title, "====================", NULL, NULL);
                     ui_write_game_line(game_list[selected_idx].nome);
                 } else {
-                    ui_draw_message(title, "====================", "Sem jogos cadastrad.", "Segure 1s p/ voltar ");
+                    ui_draw_message(title, "====================", t(MSG_NO_GAMES_AVAIL), t(MSG_HOLD_BACK_GRID));
                 }
             }
         }
         
         if (btn_event == BUTTON_LONG_PRESS) {
-            printf("[SISTEMA] Clique longo no grid! Entrando no Menu do Banco de Dados...\n");
+            printf("[SISTEMA] Clique longo no grid! Entrando no Menu do Sistema...\n");
             sel_substate = SUBSTATE_DB_MENU;
             db_menu_focus = 0;
-            ui_draw_message("** GERENCIAR BANCO **", "====================", "> Atualizar Jogos   ", "  Voltar            ");
+            draw_system_menu(db_menu_focus);
         }
     } 
     else if (sel_substate == SUBSTATE_GAME_LIST) {
@@ -171,7 +189,7 @@ static void handle_state_selecionando(uint32_t now) {
                     printf("[SISTEMA] SPI activa, console rodando da RAM.\n");
                     printf("============================================\n\n");
                     
-                    ui_draw_message("CONSOLE ATIVO       ", "====================", active_game_name, "Segure 1s p/ voltar ");
+                    ui_draw_message(t(MSG_CONSOLE_ACTIVE), "====================", active_game_name, t(MSG_HOLD_BACK));
                 } else {
                     // Re-carrega a lista de jogos para poder navegar novamente
                     db_fetch_games_by_letter(CATEGORIES[category_idx], &game_list, &game_count);
@@ -181,12 +199,12 @@ static void handle_state_selecionando(uint32_t now) {
                     
                     // Redesenha a lista
                     char title[21];
-                    snprintf(title, sizeof(title), "-> LETRA %c (%d)", CATEGORIES[category_idx], game_count);
+                    snprintf(title, sizeof(title), t(MSG_LETTER_FORMAT), CATEGORIES[category_idx], game_count);
                     if (game_count > 0) {
                         ui_draw_message(title, "====================", NULL, NULL);
                         ui_write_game_line(game_list[selected_idx].nome);
                     } else {
-                        ui_draw_message(title, "====================", "Sem jogos cadastrad.", "Segure 1s p/ voltar ");
+                        ui_draw_message(title, "====================", t(MSG_NO_GAMES_AVAIL), t(MSG_HOLD_BACK_GRID));
                     }
                 }
             }
@@ -197,41 +215,46 @@ static void handle_state_selecionando(uint32_t now) {
             printf("[SISTEMA] Clique longo detectado na lista! Voltando para o Grid de Letras...\n");
             sel_substate = SUBSTATE_LETTER_GRID;
             
-            ui_draw_message(" SELECIONE A LETRA  ", NULL, NULL, NULL);
+            ui_draw_message(t(MSG_SELECT_LETTER), NULL, NULL, NULL);
             ui_draw_letters_grid_full(category_idx);
         }
     }
     else if (sel_substate == SUBSTATE_DB_MENU) {
         if (rot != 0) {
             db_menu_focus += rot;
-            if (db_menu_focus < 0) db_menu_focus = 1;
-            if (db_menu_focus > 1) db_menu_focus = 0;
+            if (db_menu_focus < 0) db_menu_focus = 2;
+            if (db_menu_focus > 2) db_menu_focus = 0;
             
-            if (db_menu_focus == 0) {
-                ui_draw_message("** GERENCIAR BANCO **", "====================", "> Atualizar Jogos   ", "  Voltar            ");
-            } else {
-                ui_draw_message("** GERENCIAR BANCO **", "====================", "  Atualizar Jogos   ", "> Voltar            ");
-            }
+            draw_system_menu(db_menu_focus);
         }
         
         if (btn_event == BUTTON_CLICK) {
             if (db_menu_focus == 0) {
                 printf("[SISTEMA] Iniciando atualizacao de presenca no SD...\n");
-                ui_draw_message(" ATUALIZANDO BANCO  ", "====================", "Iniciando scan...   ", "Aguarde...          ");
+                ui_draw_message(t(MSG_UPDATING_DB), "====================", t(MSG_INIT_SCAN), t(MSG_WAIT));
                 
                 db_update_sd_presence(db_scan_progress_callback);
                 
-                ui_draw_message(" BANCO ATUALIZADO   ", "====================", "Sucesso!            ", "                    ");
+                ui_draw_message(t(MSG_DB_SUCCESS), "====================", t(MSG_SUCCESS), "                    ");
                 sleep_ms(1500);
                 
                 // Retorna ao grid de letras
                 sel_substate = SUBSTATE_LETTER_GRID;
-                ui_draw_message(" SELECIONE A LETRA  ", NULL, NULL, NULL);
+                ui_draw_message(t(MSG_SELECT_LETTER), NULL, NULL, NULL);
                 ui_draw_letters_grid_full(category_idx);
-            } else {
+            } else if (db_menu_focus == 1) {
+                // Alterna o idioma
+                Language next_lang = (translation_get_language() == LANG_EN) ? LANG_PT_BR : LANG_EN;
+                translation_set_language(next_lang);
+                config_save();
+                ui_menu_update_labels();
+                
+                // Redesenha o menu imediatamente com o novo idioma
+                draw_system_menu(db_menu_focus);
+            } else if (db_menu_focus == 2) {
                 // Voltar
                 sel_substate = SUBSTATE_LETTER_GRID;
-                ui_draw_message(" SELECIONE A LETRA  ", NULL, NULL, NULL);
+                ui_draw_message(t(MSG_SELECT_LETTER), NULL, NULL, NULL);
                 ui_draw_letters_grid_full(category_idx);
             }
         }
@@ -239,7 +262,7 @@ static void handle_state_selecionando(uint32_t now) {
         if (btn_event == BUTTON_LONG_PRESS) {
             // Retorna ao grid de letras
             sel_substate = SUBSTATE_LETTER_GRID;
-            ui_draw_message(" SELECIONE A LETRA  ", NULL, NULL, NULL);
+            ui_draw_message(t(MSG_SELECT_LETTER), NULL, NULL, NULL);
             ui_draw_letters_grid_full(category_idx);
         }
     }
@@ -254,7 +277,7 @@ static void return_to_rom_menu(void) {
     edit_mode = false;
     
     fpga_osd_set_visible(true);
-    ui_draw_message(" CARREGANDO MENU... ", "====================", "Aguarde...          ", "                    ");
+    ui_draw_message(t(MSG_LOADING_MENU), "====================", t(MSG_WAIT), "                    ");
     
     fpga_set_rgb(COLOR_RGB_SELECT_R, COLOR_RGB_SELECT_G, COLOR_RGB_SELECT_B);
     
@@ -282,12 +305,12 @@ static void return_to_rom_menu(void) {
         current_state = STATE_SELECIONANDO;
         
         char title[21];
-        snprintf(title, sizeof(title), "-> LETRA %c (%d)", current_letter, game_count);
+        snprintf(title, sizeof(title), t(MSG_LETTER_FORMAT), current_letter, game_count);
         if (game_count > 0) {
             ui_draw_message(title, "====================", NULL, NULL);
             ui_write_game_line(game_list[selected_idx].nome);
         } else {
-            ui_draw_message(title, "====================", "Sem jogos cadastrad.", "Segure 1s p/ voltar ");
+            ui_draw_message(title, "====================", t(MSG_NO_GAMES_AVAIL), t(MSG_HOLD_BACK_GRID));
         }
     }
     
@@ -323,7 +346,7 @@ static void handle_state_jogando(uint32_t now) {
             menu_focus = 1; // Inicia selecionado em "Reiniciar"
             menu_scroll = 0;
             
-            ui_draw_message("* CONFIG. RAPIDAS *", NULL, NULL, NULL);
+            ui_draw_message(t(MSG_QUICK_SETTINGS), NULL, NULL, NULL);
             for (int i = 0; i < 3; i++) {
                 ui_draw_quick_settings_line(i + 1, menu_scroll + i, (menu_focus == menu_scroll + i), false, true);
             }
@@ -343,7 +366,7 @@ static void handle_state_configurando(uint32_t now) {
         current_state = STATE_JOGANDO;
         fpga_set_rgb(COLOR_RGB_PLAY_R, COLOR_RGB_PLAY_G, COLOR_RGB_PLAY_B);
         fpga_osd_set_visible(false);
-        ui_draw_message("CONSOLE ATIVO       ", "====================", active_game_name, "Segure 1s p/ voltar ");
+        ui_draw_message(t(MSG_CONSOLE_ACTIVE), "====================", active_game_name, t(MSG_HOLD_BACK));
         printf("[SISTEMA] Voltando para a gameplay (via clique longo)\n");
         return;
     }
@@ -378,7 +401,7 @@ static void handle_state_configurando(uint32_t now) {
                 current_state = STATE_JOGANDO;
                 fpga_set_rgb(COLOR_RGB_PLAY_R, COLOR_RGB_PLAY_G, COLOR_RGB_PLAY_B);
                 fpga_osd_set_visible(false);
-                ui_draw_message("CONSOLE ATIVO       ", "====================", active_game_name, "Segure 1s p/ voltar ");
+                ui_draw_message(t(MSG_CONSOLE_ACTIVE), "====================", active_game_name, t(MSG_HOLD_BACK));
                 printf("[SISTEMA] Voltando para a gameplay\n");
             } else if (menu_focus == 1) {
                 // Game Reset (Tecla F2)
@@ -389,7 +412,7 @@ static void handle_state_configurando(uint32_t now) {
                 current_state = STATE_JOGANDO;
                 fpga_set_rgb(COLOR_RGB_PLAY_R, COLOR_RGB_PLAY_G, COLOR_RGB_PLAY_B);
                 fpga_osd_set_visible(false);
-                ui_draw_message("CONSOLE ATIVO       ", "====================", active_game_name, "Segure 1s p/ voltar ");
+                ui_draw_message(t(MSG_CONSOLE_ACTIVE), "====================", active_game_name, t(MSG_HOLD_BACK));
             } else {
                 // Entra no modo de edição da opção
                 edit_mode = true;
@@ -542,6 +565,8 @@ int main() {
 
     if (sd_ok) {
         printf("[DEBUG] Cartao SD montado com sucesso!\n");
+        config_load();
+        ui_menu_update_labels();
         db_ok = db_init();
         if (db_ok) {
             printf("[DEBUG] Banco de dados '/roms.bin' inicializado com sucesso!\n");
@@ -590,7 +615,7 @@ int main() {
     fpga_osd_set_visible(true);
 
     // Inicializa a tela com o Grid de Letras se o banco estiver operante
-    ui_draw_message(" SELECIONE A LETRA  ", NULL, NULL, NULL);
+    ui_draw_message(t(MSG_SELECT_LETTER), NULL, NULL, NULL);
     ui_draw_letters_grid_full(category_idx);
 
     printf("\n============================================\n");

@@ -150,7 +150,7 @@ stateDiagram-v2
 * **`STATE_SELECIONANDO`**:
   * The LCD renders a grid of letters for alphabetical search of ROMs, followed by the game list for the selected letter. Concurrently, the interface is drawn on the **FPGA graphical OSD** (vertically centered with a 2px spacing between lines).
   * **Availability Filter**: Only letters that have at least one game physically present on the SD card (`sd == 1` field in the database) are enabled in the grid. The game list also only shows present games, optimization that saves memory (RAM) on the RP2040.
-  * **Database Menu**: Pressing the encoder for 1s (long click) while in the letter grid opens the database management menu (substate `SUBSTATE_DB_MENU`), offering the options **Update Games** (performs a physical scan of the SD card, updates the `sd` field for each record in the `/roms.bin` file, and shows real-time progress) and **Back**.
+  * **System / Configuration Menu**: Pressing the encoder for 1s (long click) while in the letter grid opens the system configuration menu (substate `SUBSTATE_DB_MENU`), offering the options **Update Games** (performs a physical scan of the SD card, updates the `sd` field for each record in the `/roms.bin` file, and shows real-time progress), **Language** (allows toggling the system language in real-time between Portuguese and English, saving the preference to the `/fpgabuddy.cfg` file on the SD card), and **Back**.
   * The menu cursor preserves the position of the last loaded game upon returning.
   * The onboard RGB LED turns **Green** (`0, 127, 0`) to signal this state.
 * **`STATE_JOGANDO`**:
