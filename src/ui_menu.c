@@ -25,6 +25,7 @@ static const char *ASPECT_LABELS[] = {"4:3", "16:9"};
 static const char *SWAP_LABELS[] = {"Nao", "Sim"};
 static const char *VIDEO_LABELS[] = {"AUTO", "PAL", "NTSC"};
 static const char *CONTROLS_LABELS[] = {"JOY", "PAD"};
+static const char *VSYNC_STAB_LABELS[] = {"Smart", "Fixed", "None"};
 
 static MenuOption menu_options[MENU_MAX_ITEMS] = {
     {"Voltar ao Jogo", '\0', 0, 0, NULL},
@@ -38,7 +39,8 @@ static MenuOption menu_options[MENU_MAX_ITEMS] = {
     {"Ajuste Tela", 'W', 1, 1, ASPECT_LABELS},
     {"Swap Joysticks", '&', 0, 1, SWAP_LABELS},
     {"Padrao Video", 'E', 0, 2, VIDEO_LABELS},
-    {"VBlank", 'M', 0, 1, SWAP_LABELS}
+    {"VBlank", 'M', 0, 1, SWAP_LABELS},
+    {"VSync Stab", 'T', 0, 2, VSYNC_STAB_LABELS}
 };
 
 // Funções utilitárias do LCD virtual

@@ -68,6 +68,7 @@ uint8_t cmd[4] = {
 *   **Swap Joysticks (`'&'`)** (Index 9): `0` (Normal), `1` (Swap P1/P2 ports)
 *   **Padrao Video (`'E'`)** (Index 10): `0` (AUTO - reset on each new game), `1` (PAL), `2` (NTSC)
 *   **VBlank (`'M'`)** (Index 11): `0` (No), `1` (Yes)
+*   **VSync Stab (`'T'`)** (Index 12): `0` (Smart - dynamic), `1` (Fixed - 262 fixed lines), `2` (None - full bypass). Selecting this mode helps fix display/sync stability issues in games with very critical timings.
 
 > [!NOTE]
 > **SPI Mode Management for Settings**: To avoid synchronization conflicts with HID commands (which restore the bus to Mode 0 for SD Card compatibility), writing individual settings in the LCD menu uses the `fpga_send_config(id, val)` function. It temporarily switches SPI0 to **Mode 1** and restores it to **Mode 0** immediately after transmission.

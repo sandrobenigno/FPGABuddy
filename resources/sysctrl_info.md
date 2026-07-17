@@ -97,6 +97,7 @@ Sempre que a FPGA recebe um payload direcionado ao Target `0x00`, o byte seguint
 | **`"O"`** | `system_vm` | [0] Modo de vídeo (0 = Colorido, 1 = Preto & Branco) |
 | **`"U"`** | `system_sc` | [1:0] Configuração de Superchip (RAM extra) |
 | **`"E"`** | `system_video_std` | [1:0] Padrão de Vídeo (**0 = AUTO**, **1 = PAL**, **2 = NTSC**) |
+| **`"T"`** | `system_vsync_stab` | [1:0] Modo do Estabilizador de VSync (**0 = Smart**, **1 = Fixed**, **2 = None**) |
 | **`"R"`** | `main_reset` | [1:0] Controle de Reset físico (1 = Reset ativo, 0 = Run) |
 | **`"S"`** | `system_scanlines` | [1:0] Intensidade do Scanline (0 = Desl., 1 = 25%, 2 = 50%, 3 = 75%) |
 | **`"A"`** | `system_volume` | [1:0] Volume (0 = Mudo, 1 = 33%, 2 = 66%, 3 = 100%) |
